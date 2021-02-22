@@ -1,15 +1,14 @@
 let { readFileSync } = require("fs");
 
-
 const table = ( arr ) =>
       Array.from( new Set( arr ) )
       .map( x => arr.map( y => ( y == x ) ? 1 : 0 ) );
 
-
-const encode = arr =>
-      [ arr.length + 1, ...table( arr )
+function encode(arr) {
+    return [ arr.length + 1, ...table( arr )
         .flatMap( ( x, i ) =>
                   [ Array.from( new Set(arr) )[i], x ] ).flat(2) ];
+}
 
 
 const decode = arr => {
@@ -31,7 +30,7 @@ const decode = arr => {
 }
 
 
-let src = Array.from( "Hello,World! Hello,World! Hello,World!");
+let src = Array.from( "Hello, World! Hello, World! Hello, World!");
 let encoded = encode( src );
 let decoded = decode( encoded );
 
