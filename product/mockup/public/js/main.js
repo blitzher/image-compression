@@ -1,12 +1,14 @@
 import * as Util from "./init.js";
 
+/* const $ = (i) => document.getElementById(i) */
 
 const clientSession = Util.init( window.location.host );
 
+/* get form elements from document */
 let msgForm = document.forms.msgForm;
-
 let setDisplayNameForm = document.forms.setDisplayNameForm;
 
+/* unhide displayNameForm when displayName is not set */
 if (clientSession.displayName === null) document.getElementById("setName").style.display = "flex";
 
 clientSession.socket.addEventListener("connect", () => {
@@ -15,16 +17,16 @@ clientSession.socket.addEventListener("connect", () => {
 		body: "Hello, server!"
 	}));
 
-	socket.send()
-})
+    socket.send();
+});
 
 clientSession.socket.addEventListener("message", e => {
 	Util.receivedMsg(JSON.parse(e.data));
 });
 
 msgForm.addEventListener("submit", e => {
-	e.preventDefault();
-	Util.sendMsg();
+    e.preventDefault();
+    Util.sendMsg();
 
 	let image = document.getElementById("imageUpload");
 	if (image.value !== null) {
@@ -32,13 +34,16 @@ msgForm.addEventListener("submit", e => {
 	}
 	image.value = null;
 
-	console.log(sessionStorage.getItem("displayName"));
+    console.log(sessionStorage.getItem("displayName"));
 });
 
+/* when the display name has just been set */
 setDisplayNameForm.addEventListener("submit", e => {
-	e.preventDefault();
-	sessionStorage.setItem("displayName", setDisplayNameForm.setDisplayName.value);
-	document.getElementById("setName").style.display = "none";
+    e.preventDefault();
+    clientSession.displayName = setDisplayNameForm.setDisplayName.value;
+    sessionStorage.setItem("displayName", clientSession.displayName);
+    document.getElementById("setName").style.display = "none";
+    document.getElementById("currentUser").innerText = "User: " + clientSession.displayName;
 })
 
 clientSession.socket.addEventListener("error", () => {

@@ -4,33 +4,31 @@ const fileUpload = require("express-fileupload");
 const app = express();
 const expressWs = require('express-ws')(app);
 
-const port = 8989;
+const port = 8990;
 
 app.use(fileUpload());
 app.use(express.json());
 app.use('/', express.static(__dirname + '/public'));
 var wss = expressWs.getWss('/');
 
-const messageHistory = [
-    {
-        displayName: "Cool Server😎",
-        body: "🍔"
-    }
-];
+const messageHistory = [{
+    displayName: "Cool Server😎",
+    body: "🍔"
+}];
 
 app.ws('/', (ws, req) => {
     //ws.send('{"displayName": "", "body": "Hello, Client!"}');
 
     ws.on('message', (message) => {
         console.log(message);
-        
-        wss.clients.forEach( (client) => {
+
+        wss.clients.forEach((client) => {
             client.send(message);
         });
-        
+
         messageHistory.push(JSON.parse(message))
-        
     });
+
 });
 
 app.get('/api/get_message_history/', (req, res) => {
