@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,26 +8,37 @@
     <title>Not Messenger</title>
 
     <link rel="stylesheet" href="./css/style.css">
-    <script> const date = new Date();</script>
+    <script>
+        const date = new Date();
+    </script>
 
 </head>
+
 <body>
+    <!-- input for name, hidden when displayName is set -->
     <div class="modal" style="display: none" id="setName">
         <form name="setDisplayNameForm">
             <p>Display name</p>
             <input type="text" name="setDisplayName">
-            <input type="submit" value="confirm"> 
+            <input type="submit" value="confirm">
         </form>
     </div>
+
+    <!-- wrapper for the whole page -->
     <div id="chatboxWrapper">
+
+        <!-- the name of current user -->
         <div id="chatMenu">
             <p id="currentUser"></p>
         </div>
 
+        <!-- the chatbox, with all past messages -->
         <div id="chatbox-box">
-            <div id="chatbox"></div>
+            <div id="chatbox">
+            </div>
         </div>
 
+        <!-- input field from user, with text, images and send button -->
         <form id="msgForm" name="msgForm">
             <span id="msgInputSpan">
                 <input type="text" name="msgInput" id="msgInput"  autofocus="on" autocomplete="off">
@@ -39,4 +51,5 @@
 
     <script type="module" src="./js/main.js"></script>
 </body>
+
 </html>
