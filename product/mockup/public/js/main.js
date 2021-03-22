@@ -1,6 +1,6 @@
 import * as Util from "./init.js";
 
-/* const $ = (i) => document.getElementById(i) */
+const $ = (id) => document.getElementById(id)
 
 
 
@@ -9,7 +9,10 @@ let msgForm = document.forms.msgForm;
 let setDisplayNameForm = document.forms.setDisplayNameForm;
 
 /* unhide displayNameForm when displayName is not set */
-if (Util.clientSession.displayName === null) document.getElementById("setName").style.display = "flex";
+if (Util.clientSession.displayName === null) {
+    $("setName").style.display = "flex";
+    $("displayNameInput").focus();
+}
 
 Util.clientSession.socket.addEventListener("connect", () => {
     socket.send(JSON.stringify({
