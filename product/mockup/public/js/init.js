@@ -16,25 +16,52 @@ const bubbleElem = ( text, time, user ) => {
 }
 
 export const sendMsg = ( session, contentType, imageSrc ) => {
-	let msg = msgForm.elements.msgInput.value;
+	let msg = msgForm.elements.msgInput.value.trim();
 
-	if ( msg != "" ) {
+	const sendTime = new Date().getTime();
 
-        session.socket.send(JSON.stringify({
-            displayName: session.displayName,
-            body: msgForm.elements.msgInput.value,
-			contentType: contentType,
-			imageSrc: imageSrc
-        }));
+	session.socket.send(JSON.stringify({
+		displayName: session.displayName,
+		body: msgForm.elements.msgInput.value,
+		contentType: contentType,
+		imageSrc: imageSrc,
+		timeStamp: sendTime
+	}));
 
         msgForm.elements.msgInput.value = "";
-    }
 };
 
 /* append a message to chatbox, as if it was received */
+
+
 export const receivedMsg = (msg) => {
-    let chatbox = $("chatbox");
-    let bubble = bubbleElem(msg.body, `${date.getHours()}:${date.getMinutes()}`, msg.displayName);
+    let chatbox = document.getElementById("chatbox");
+    /* ?? why is this here ?? */
+    console.log(msg);
+    const timestamp = new Date(msg.timestamp)
+
+    /**
+     * format such as 21:05
+     * or 9:05 PM
+     */
+
+    /* FOR FUTURE CONFIGS / SETTINGS */
+    const american_time = true;
+
+    let formattedTime;
+    if (american_time) {
+        let hours = timestamp.getHours();
+        const minutes = timestamp.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = (hours % 12) || 12;
+        formattedTime = hours + ':' + minutes + ' ' + ampm;
+    } else {
+        const hours = timestamp.getHours().toString();
+        const minutes = timestamp.getMinutes().toString().padStart(2, '0');
+        formattedTime = `${hours}:${minutes}`;
+    }
+
+    let bubble = bubbleElem(msg.body, formattedTime, msg.displayName);
 
 	if (msg.contentType === "image") {
 		let image = document.createElement("img");
@@ -77,17 +104,19 @@ export const sendImage = ( host, session ) => {
 	let formData = new FormData();
 	formData.append("image", file);
 
-	console.log(file.name)
-	console.log(`${host}/api/upload`)
+	if (typeof file !== "undefined") {
+		console.log(file.name)
+		console.log(`${host}/api/upload`)
 
-	xhr.open("POST", `/api/upload`, true);
-	xhr.onload = () => {
-		if ( xhr.readyState === 4 && xhr.status === 200 ) {
-			console.log("something")
+		xhr.open("POST", `/api/upload`, true);
+		xhr.onload = () => {
+			if ( xhr.readyState === 4 && xhr.status === 200 ) {
+				console.log("something")
+			}
 		}
-	}
 	
-	xhr.send(formData);
+		xhr.send(formData);
 
-	sendMsg(session, "image", `http://${host}/api/images/${file.name}`);
+		sendMsg(session, "image", `http://${host}/api/images/${file.name}`);
+	}
 }

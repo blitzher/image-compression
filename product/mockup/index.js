@@ -14,6 +14,7 @@ var wss = expressWs.getWss('/');
 
 const messageHistory = [{
     displayName: "Cool Server😎",
+    timestamp: new Date().getTime(),
     body: "🍔"
 }];
 

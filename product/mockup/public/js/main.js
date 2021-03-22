@@ -1,14 +1,18 @@
 import * as Util from "./init.js";
 import { $ } from "./init.js";
 
-const clientSession = Util.init( window.location.host );
+
+let clientSession = Util.init(window.location.host);
 
 /* get form elements from document */
 let msgForm = document.forms.msgForm;
 let setDisplayNameForm = document.forms.setDisplayNameForm;
 
 /* unhide displayNameForm when displayName is not set */
-if (clientSession.displayName === null) document.getElementById("setName").style.display = "flex";
+if (clientSession.displayName === null) {
+    $("setName").style.display = "flex";
+    $("displayNameInput").focus();
+}
 
 clientSession.socket.addEventListener("connect", () => {
 	clientSession.socket.send(JSON.stringify({
@@ -20,7 +24,7 @@ clientSession.socket.addEventListener("connect", () => {
 });
 
 clientSession.socket.addEventListener("message", e => {
-	Util.receivedMsg(JSON.parse(e.data));
+    Util.receivedMsg(JSON.parse(e.data));
 });
 
 msgForm.addEventListener("submit", e => {
@@ -50,17 +54,17 @@ clientSession.socket.addEventListener("error", () => {
 	location.reload();
 });
 
-const previewImage = ( file ) => {
-	if (typeof imageUpload.files[0] !== "undefined") {
-		let preview = document.createElement("img");
-		preview.src = URL.createObjectURL(file);
-		preview.className = "image-preview";
+const previewImage = (file) => {
+    if (typeof imageUpload.files[0] !== "undefined") {
+        let preview = document.createElement("img");
+        preview.src = URL.createObjectURL(file);
+        preview.className = "image-preview";
 
 		let chatbox = $("msgForm");
 		chatbox.prepend(preview);
 
-		console.log(file.name)
-	}
+        console.log(file.name)
+    }
 }
 
 const imageUpload = $("imageUpload");

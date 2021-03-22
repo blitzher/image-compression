@@ -92,7 +92,7 @@ body {
     justify-content: space-between;
 }
 
-#msgInputSpan input[type="text"] {
+input[type="text"] {
     width: 100%;
     background-color: #44475a;
     color: #ffb86c;
@@ -101,7 +101,8 @@ body {
     margin: 5px;
 }
 
-#msgInputSpan input[type="submit"] {
+input[type="submit"],
+#uploadLabel {
     background-color: #44475a;
     border: none;
     border-radius: 5px;
@@ -110,7 +111,8 @@ body {
     margin: 5px;
 }
 
-#msgInputSpan input[type="submit"]:hover {
+input[type="submit"]:hover,
+#uploadLabel:hover {
     background-color: #777b97;
     border-radius: 5px;
     color: #ffb86c;
@@ -127,26 +129,25 @@ body {
     flex-direction: column;
     position: fixed;
     z-index: 1000;
+    margin: 0 auto;
+}
+
+.inputModal {
+    justify-items: center;
+    flex-direction: column;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 10px solid black;
+    border-radius: 50px;
+    position: absolute;
+    display: block;
+    margin-left: 50vw;
+    margin-top: 50vh;
+    transform: translate(-50%, -50%);
 }
 
 .modal form {
     padding: 30px;
-}
-
-#uploadLabel {
-    background-color: #44475a;
-    border-radius: 5px;
-    color: #bd93f9;
-    padding: 10px;
-    cursor: pointer;
-    margin: 5px;
-}
-
-#uploadLabel:hover {
-    background-color: #777b97;
-    border-radius: 5px;
-    color: #ffb86c;
-    cursor: pointer;
 }
 
 #chatMenu {
