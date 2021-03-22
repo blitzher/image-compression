@@ -73,7 +73,7 @@ export const init = () => {
 	return clientSession;
 };
 
-export const sendImage = (file) => {
+/* export const sendImage = (file) => {
 	const reader = new FileReader();
 	const xhr = new XMLHttpRequest();
 
@@ -83,4 +83,4 @@ export const sendImage = (file) => {
 		xhr.send(e.target.result);
 	};
 	reader.readAsBinaryString(file);
-}
+} */
