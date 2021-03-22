@@ -39,7 +39,7 @@ app.get('/api/get_message_history/', (req, res) => {
 
 app.post("/api/send_image", (req, res) => {
     console.log(req);
-})
+});
 
 
 app.listen(port, () => {
