@@ -115,6 +115,7 @@ export const sendImage = (host, session) => {
             }
         }
 
+        $("imageUploads").value = null;
         xhr.send(formData);
 
         sendMsg(session, "image", `http://${host}/api/images/${file.name}`);

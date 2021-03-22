@@ -3,8 +3,13 @@ const express = require('express');
 const fileUpload = require("express-fileupload");
 const app = express();
 const expressWs = require('express-ws')(app);
+const fs = require("fs");
 
 const port = 8989;
+
+if (!fs.existsSync("uploads") || !fs.statSync("uploads").isDirectory()) {
+    fs.mkdirSync("uploads");
+}
 
 app.use(fileUpload());
 app.use(express.json());
