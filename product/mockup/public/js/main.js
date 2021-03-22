@@ -1,19 +1,15 @@
 import * as Util from "./init.js";
 
 
-const clientSession = Util.init();
+const clientSession = Util.init( window.location.host );
 
 let msgForm = document.forms.msgForm;
 
 let setDisplayNameForm = document.forms.setDisplayNameForm;
 
-if (clientSession.displayName === null) {
-	let modal = document.getElementById("setName");
-	modal.style.display = "flex";
-}
+if (clientSession.displayName === null) document.getElementById("setName").style.display = "flex";
 
-
-Util.socket.addEventListener("connect", () => {
+clientSession.socket.addEventListener("connect", () => {
 	socket.send(JSON.stringify({
 		displayName: sessionStorage.getItem("displayName"),
 		body: "Hello, server!"
@@ -22,7 +18,7 @@ Util.socket.addEventListener("connect", () => {
 	socket.send()
 })
 
-Util.socket.addEventListener("message", e => {
+clientSession.socket.addEventListener("message", e => {
 	Util.receivedMsg(JSON.parse(e.data));
 });
 
@@ -32,7 +28,7 @@ msgForm.addEventListener("submit", e => {
 
 	let image = document.getElementById("imageUpload");
 	if (image.value !== null) {
-		Util.sendImage(image.files[0]);
+		clientSession.sendImage(image.files[0]);
 	}
 	image.value = null;
 
@@ -45,27 +41,20 @@ setDisplayNameForm.addEventListener("submit", e => {
 	document.getElementById("setName").style.display = "none";
 })
 
-Util.socket.addEventListener("error", () => {
+clientSession.socket.addEventListener("error", () => {
 	location.reload();
 })
 
-/* 
-setTimeout( () => {
-	location.reload();
-},	1000);
- */
-
-
 const previewImage = ( file ) => {
 	if (typeof imageUpload.files[0] !== "undefined") {
-	let preview = document.createElement("img");
-	preview.src = URL.createObjectURL(file);
-	preview.className = "image-preview";
+		let preview = document.createElement("img");
+		preview.src = URL.createObjectURL(file);
+		preview.className = "image-preview";
 
-	let chatbox = document.getElementById("msgForm");
-	chatbox.prepend(preview);
+		let chatbox = document.getElementById("msgForm");
+		chatbox.prepend(preview);
 
-	console.log(file.name)
+		console.log(file.name)
 	}
 }
 

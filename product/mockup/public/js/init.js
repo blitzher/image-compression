@@ -24,12 +24,9 @@ const bubbleElem = ( text, time, user ) => {
 	return bubble;
 }
 
-const wsURL = "ws:" + window.location.host;
-console.log(wsURL);
-export const socket = new WebSocket(wsURL);
-
 export const sendMsg = () => {
-	let msg = msgForm.elements.msgInput.value            
+	let msg = msgForm.elements.msgInput.value;
+
 	if ( msg != "" ) {
 
 		socket.send(JSON.stringify({
@@ -55,9 +52,10 @@ export const receivedMsg = ( msg ) => {
 	chatbox.parentElement.scrollTo( 0, chatbox.parentElement.scrollHeight )
 };
 
-export const init = () => {
+export const init = ( host ) => {
 	let clientSession = {
-		displayName: sessionStorage.getItem("displayName")
+		displayName: sessionStorage.getItem("displayName"),
+		socket: new WebSocket(`ws://${host}`)
 	};
 
 	/* get message history from server */
@@ -67,7 +65,7 @@ export const init = () => {
 			clientSession["msgHistory"] = data;
 			data.forEach( msg => {
 				receivedMsg(msg);
-			})
+			});
 		});
 
 	document.getElementById("currentUser").innerText = "User: " + clientSession.displayName;

@@ -11,6 +11,7 @@
 
 </head>
 <body>
+    <!-- Set display name modal (Hidden if set) -->
     <div class="modal" style="display: none" id="setName">
         <form name="setDisplayNameForm">
             <p>Display name</p>
@@ -18,25 +19,45 @@
             <input type="submit" value="confirm"> 
         </form>
     </div>
+
     <div id="chatboxWrapper">
         <div id="chatMenu">
             <p id="currentUser"></p>
         </div>
 
+        <!-- Box with msg bubbles -->
         <div id="chatbox-box">
             <div id="chatbox"></div>
         </div>
 
+        <!-- Message input and file upload form -->
         <form id="msgForm" name="msgForm">
             <span id="msgInputSpan">
-                <input type="text" name="msgInput" id="msgInput"  autofocus="on" autocomplete="off">
-                <label for="imageUpload" id="uploadLabel">Upload</label>
-                <input type="file" name="imageUpload" id="imageUpload" style="opacity: 0; width: 0;">
-                <input type="submit" value="Send">
+                <input 
+                    type="text" 
+                    name="msgInput" 
+                    id="msgInput"  
+                    autofocus="on" 
+                    autocomplete="off">
+                
+                <label 
+                    for="imageUpload" 
+                    id="uploadLabel">Upload</label>
+
+                <input 
+                    type="file" 
+                    name="imageUpload" 
+                    id="imageUpload" 
+                    style="opacity: 0; width: 0;">
+
+                <input 
+                    type="submit" 
+                    value="Send">
             </span>
         </form>
     </div>
 
+    <!-- Entry (Load after UI DOM nodes) -->
     <script type="module" src="./js/main.js"></script>
 </body>
 </html>
