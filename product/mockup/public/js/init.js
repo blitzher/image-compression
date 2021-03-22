@@ -24,7 +24,9 @@ const bubbleElem = ( text, time, user ) => {
 	return bubble;
 }
 
-export const socket = new WebSocket("ws://localhost:8989");
+const wsURL = "ws:" + window.location.host;
+console.log(wsURL);
+export const socket = new WebSocket(wsURL);
 
 export const sendMsg = () => {
 	let msg = msgForm.elements.msgInput.value            
@@ -72,15 +74,3 @@ export const init = () => {
 
 	return clientSession;
 };
-
-export const sendImage = (file) => {
-	const reader = new FileReader();
-	const xhr = new XMLHttpRequest();
-
-	xhr.open("POST", "http://localhost:8989/api/send_image");
-	xhr.overrideMimeType("image/jpeg; charset=x-user-defined-binary");
-	reader.onload = e => {
-		xhr.send(e.target.result);
-	};
-	reader.readAsBinaryString(file);
-}
