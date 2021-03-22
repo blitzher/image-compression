@@ -2,37 +2,36 @@ import * as Util from "./init.js";
 
 /* const $ = (i) => document.getElementById(i) */
 
-const clientSession = Util.init( window.location.host );
+
 
 /* get form elements from document */
 let msgForm = document.forms.msgForm;
 let setDisplayNameForm = document.forms.setDisplayNameForm;
 
 /* unhide displayNameForm when displayName is not set */
-if (clientSession.displayName === null) document.getElementById("setName").style.display = "flex";
+if (Util.clientSession.displayName === null) document.getElementById("setName").style.display = "flex";
 
-clientSession.socket.addEventListener("connect", () => {
-	socket.send(JSON.stringify({
-		displayName: sessionStorage.getItem("displayName"),
-		body: "Hello, server!"
-	}));
+Util.clientSession.socket.addEventListener("connect", () => {
+    socket.send(JSON.stringify({
+        displayName: sessionStorage.getItem("displayName"),
+        body: "Hello, server!"
+    }));
 
     socket.send();
 });
 
-clientSession.socket.addEventListener("message", e => {
-	Util.receivedMsg(JSON.parse(e.data));
+Util.clientSession.socket.addEventListener("message", e => {
+    Util.receivedMsg(JSON.parse(e.data));
 });
 
 msgForm.addEventListener("submit", e => {
     e.preventDefault();
     Util.sendMsg();
 
-	let image = document.getElementById("imageUpload");
-	if (image.value !== null) {
-		clientSession.sendImage(image.files[0]);
-	}
-	image.value = null;
+    let images = document.getElementById("imageUpload").files;
+    if (images.length > 0) {
+        Util.clientSession.sendImage(images.files[0]);
+    }
 
     console.log(sessionStorage.getItem("displayName"));
 });
@@ -40,27 +39,27 @@ msgForm.addEventListener("submit", e => {
 /* when the display name has just been set */
 setDisplayNameForm.addEventListener("submit", e => {
     e.preventDefault();
-    clientSession.displayName = setDisplayNameForm.setDisplayName.value;
-    sessionStorage.setItem("displayName", clientSession.displayName);
+    Util.clientSession.displayName = setDisplayNameForm.setDisplayName.value;
+    sessionStorage.setItem("displayName", Util.clientSession.displayName);
     document.getElementById("setName").style.display = "none";
-    document.getElementById("currentUser").innerText = "User: " + clientSession.displayName;
+    document.getElementById("currentUser").innerText = "User: " + Util.clientSession.displayName;
 })
 
-clientSession.socket.addEventListener("error", () => {
-	location.reload();
+Util.clientSession.socket.addEventListener("error", () => {
+    location.reload();
 })
 
-const previewImage = ( file ) => {
-	if (typeof imageUpload.files[0] !== "undefined") {
-		let preview = document.createElement("img");
-		preview.src = URL.createObjectURL(file);
-		preview.className = "image-preview";
+const previewImage = (file) => {
+    if (typeof imageUpload.files[0] !== "undefined") {
+        let preview = document.createElement("img");
+        preview.src = URL.createObjectURL(file);
+        preview.className = "image-preview";
 
-		let chatbox = document.getElementById("msgForm");
-		chatbox.prepend(preview);
+        let chatbox = document.getElementById("msgForm");
+        chatbox.prepend(preview);
 
-		console.log(file.name)
-	}
+        console.log(file.name)
+    }
 }
 
 const imageUpload = document.getElementById("imageUpload");

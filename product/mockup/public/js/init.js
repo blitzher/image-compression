@@ -24,12 +24,18 @@ const bubbleElem = (text, time, user) => {
 }
 
 export const sendMsg = () => {
-	let msg = msgForm.elements.msgInput.value;
+    let msg = msgForm.elements.msgInput.value.trim();
 
-	if ( msg != "" ) {
 
-        socket.send(JSON.stringify({
+
+    if (msg != "") {
+
+        const sendTime = new Date().getTime();
+
+        /* send the message to the server, with the current time as timestamp */
+        clientSession.socket.send(JSON.stringify({
             displayName: sessionStorage.getItem("displayName"),
+            timestamp: sendTime,
             body: msgForm.elements.msgInput.value
         }));
 
@@ -38,10 +44,36 @@ export const sendMsg = () => {
 };
 
 /* append a message to chatbox, as if it was received */
+
+
 export const receivedMsg = (msg) => {
     let chatbox = document.getElementById("chatbox");
     /* ?? why is this here ?? */
-    let bubble = bubbleElem(msg.body, `${date.getHours()}:${date.getMinutes()}`, msg.displayName);
+    console.log(msg);
+    const timestamp = new Date(msg.timestamp)
+
+    /**
+     * format such as 21:05
+     * or 9:05 PM
+     */
+
+    /* FOR FUTURE CONFIGS / SETTINGS */
+    const american_time = true;
+
+    let formattedTime;
+    if (american_time) {
+        let hours = timestamp.getHours();
+        const minutes = timestamp.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = (hours % 12) || 12;
+        formattedTime = hours + ':' + minutes + ' ' + ampm;
+    } else {
+        const hours = timestamp.getHours().toString();
+        const minutes = timestamp.getMinutes().toString().padStart(2, '0');
+        formattedTime = `${hours}:${minutes}`;
+    }
+
+    let bubble = bubbleElem(msg.body, formattedTime, msg.displayName);
 
     if (msg.displayName === sessionStorage.getItem("displayName")) {
         bubble.classList.add("msg-bubble-my");
@@ -51,35 +83,37 @@ export const receivedMsg = (msg) => {
     chatbox.parentElement.scrollTo(0, chatbox.parentElement.scrollHeight)
 };
 
-export const init = ( host ) => {
-	let clientSession = {
-		displayName: sessionStorage.getItem("displayName"),
-		socket: new WebSocket(`ws://${host}`)
-	};
+export const init = (host) => {
+    let clientSession = {
+        displayName: sessionStorage.getItem("displayName"),
+        socket: new WebSocket(`ws://${host}`)
+    };
 
-	/* get message history from server */
-	fetch(window.location + 'api/get_message_history')
-		.then( response => response.json() )
-		.then( data => {
-			clientSession["msgHistory"] = data;
-			data.forEach( msg => {
-				receivedMsg(msg);
-			});
-		});
+    /* get message history from server */
+    fetch(window.location + 'api/get_message_history')
+        .then(response => response.json())
+        .then(data => {
+            clientSession["msgHistory"] = data;
+            data.forEach(msg => {
+                receivedMsg(msg);
+            });
+        });
 
-	document.getElementById("currentUser").innerText = "User: " + clientSession.displayName;
+    document.getElementById("currentUser").innerText = "User: " + clientSession.displayName;
 
-	return clientSession;
+    return clientSession;
 };
 
 /* export const sendImage = (file) => {
-	const reader = new FileReader();
-	const xhr = new XMLHttpRequest();
+    const reader = new FileReader();
+    const xhr = new XMLHttpRequest();
 
-	xhr.open("POST", "http://localhost:8989/api/send_image");
-	xhr.overrideMimeType("image/jpeg; charset=x-user-defined-binary");
-	reader.onload = e => {
-		xhr.send(e.target.result);
-	};
-	reader.readAsBinaryString(file);
+    xhr.open("POST", "http://localhost:8989/api/send_image");
+    xhr.overrideMimeType("image/jpeg; charset=x-user-defined-binary");
+    reader.onload = e => {
+        xhr.send(e.target.result);
+    };
+    reader.readAsBinaryString(file);
 } */
+
+export const clientSession = init(window.location.host);
