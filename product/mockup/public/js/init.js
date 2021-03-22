@@ -37,7 +37,7 @@ export const sendMsg = (session, contentType, imageSrc) => {
 /* append a message to chatbox, as if it was received */
 
 
-export const receivedMsg = (msg) => {
+export const receivedMsg = (msg, tone) => {
     let chatbox = document.getElementById("chatbox");
 
     const timestamp = new Date(msg.timestamp)
@@ -75,6 +75,11 @@ export const receivedMsg = (msg) => {
         bubble.classList.add("msg-bubble-my");
     }
 
+    if (tone && msg.displayName !== sessionStorage.getItem("displayName")) {
+        const audio = new Audio(`tone.mp3`);
+        audio.play();
+    }
+
     chatbox.appendChild(bubble);
     chatbox.parentElement.scrollTo(0, chatbox.parentElement.scrollHeight)
 };
@@ -91,7 +96,7 @@ export const init = (host) => {
         .then(data => {
             clientSession["msgHistory"] = data;
             data.forEach(msg => {
-                receivedMsg(msg);
+                receivedMsg(msg, false);
             });
         });
 

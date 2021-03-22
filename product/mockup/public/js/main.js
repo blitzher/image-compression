@@ -24,7 +24,7 @@ clientSession.socket.addEventListener("connect", () => {
 });
 
 clientSession.socket.addEventListener("message", e => {
-    Util.receivedMsg(JSON.parse(e.data));
+    Util.receivedMsg(JSON.parse(e.data), true);
 });
 
 msgForm.addEventListener("submit", e => {
@@ -37,8 +37,6 @@ msgForm.addEventListener("submit", e => {
     } else {
         Util.sendMsg(clientSession, "text");
     }
-
-    console.log(sessionStorage.getItem("displayName"));
 });
 
 /* when the display name has just been set */
