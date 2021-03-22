@@ -62,8 +62,6 @@ const previewImage = (file) => {
 
         let chatbox = $("msgForm");
         chatbox.prepend(preview);
-
-        console.log(file.name)
     }
 }
 

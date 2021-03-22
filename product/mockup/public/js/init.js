@@ -8,9 +8,9 @@ const bubbleElem = (text, time, user) => {
     bubble.className = "msg-bubble";
 
     bubble.innerHTML = `
+	<p class="bubble-user">${user ? user + " says:" : ""}</p>
 	<p class="bubble-body">${text}</p>
-	<p class="bubble-time">${time}</p>
-	<p class="bubble-user">${user ? user + ", says:" : ""}</p>`;
+	<p class="bubble-time">${time}</p>`;
 
     return bubble;
 }
@@ -20,12 +20,15 @@ export const sendMsg = (session, contentType, imageSrc) => {
 
     const sendTime = new Date().getTime();
 
+    if (msg === "" && !imageSrc)
+        return;
+
     session.socket.send(JSON.stringify({
         displayName: session.displayName,
         body: msgForm.elements.msgInput.value,
         contentType: contentType,
         imageSrc: imageSrc,
-        timeStamp: sendTime
+        timestamp: sendTime
     }));
 
     msgForm.elements.msgInput.value = "";
@@ -36,8 +39,7 @@ export const sendMsg = (session, contentType, imageSrc) => {
 
 export const receivedMsg = (msg) => {
     let chatbox = document.getElementById("chatbox");
-    /* ?? why is this here ?? */
-    console.log(msg);
+
     const timestamp = new Date(msg.timestamp)
 
     /**
@@ -51,7 +53,7 @@ export const receivedMsg = (msg) => {
     let formattedTime;
     if (american_time) {
         let hours = timestamp.getHours();
-        const minutes = timestamp.getMinutes().toString().padStart(2, '0');
+        let minutes = timestamp.getMinutes().toString().padStart(2, '0');
         const ampm = hours >= 12 ? 'PM' : 'AM';
         hours = (hours % 12) || 12;
         formattedTime = hours + ':' + minutes + ' ' + ampm;
@@ -105,17 +107,20 @@ export const sendImage = (host, session) => {
     formData.append("image", file);
 
     if (typeof file !== "undefined") {
-        console.log(file.name)
-        console.log(`${host}/api/upload`)
 
         xhr.open("POST", `/api/upload`, true);
         xhr.onload = () => {
             if (xhr.readyState === 4 && xhr.status === 200) {
-                console.log("something")
+                console.log("success")
             }
         }
 
-        $("imageUploads").value = null;
+
+        $("imageUpload").value = null;
+        const previews = document.getElementsByClassName("image-preview")
+        for (let i = previews.length - 1; i >= 0; i--) {
+            previews[i].remove()
+        }
         xhr.send(formData);
 
         sendMsg(session, "image", `http://${host}/api/images/${file.name}`);
