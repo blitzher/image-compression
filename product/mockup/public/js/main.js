@@ -15,10 +15,10 @@ if (clientSession.displayName === null) {
 }
 
 clientSession.socket.addEventListener("connect", () => {
-	clientSession.socket.send(JSON.stringify({
-		displayName: clientSession.displayName,
-		body: "Hello, server!"
-	}));
+    clientSession.socket.send(JSON.stringify({
+        displayName: clientSession.displayName,
+        body: "Hello, server!"
+    }));
 
     clientSession.socket.send(clientSession);
 });
@@ -30,13 +30,13 @@ clientSession.socket.addEventListener("message", e => {
 msgForm.addEventListener("submit", e => {
     e.preventDefault();
 
-	let image = $("imageUpload");
-	if (image !== null && image.value !== null) {
-		console.log("sending image...")
-		Util.sendImage(window.location.host, clientSession);
-	} else {
-		Util.sendMsg(clientSession, "text");
-	}
+    let image = $("imageUpload").files;
+    if (image.length) {
+        console.log("sending image...")
+        Util.sendImage(window.location.host, clientSession);
+    } else {
+        Util.sendMsg(clientSession, "text");
+    }
 
     console.log(sessionStorage.getItem("displayName"));
 });
@@ -51,7 +51,7 @@ setDisplayNameForm.addEventListener("submit", e => {
 })
 
 clientSession.socket.addEventListener("error", () => {
-	location.reload();
+    location.reload();
 });
 
 const previewImage = (file) => {
@@ -60,8 +60,8 @@ const previewImage = (file) => {
         preview.src = URL.createObjectURL(file);
         preview.className = "image-preview";
 
-		let chatbox = $("msgForm");
-		chatbox.prepend(preview);
+        let chatbox = $("msgForm");
+        chatbox.prepend(preview);
 
         console.log(file.name)
     }
