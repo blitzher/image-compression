@@ -4,11 +4,12 @@ const fileUpload = require("express-fileupload");
 const app = express();
 const expressWs = require('express-ws')(app);
 
-const port = 8990;
+const port = 8989;
 
 app.use(fileUpload());
 app.use(express.json());
 app.use('/', express.static(__dirname + '/public'));
+app.use("/api/images", express.static(__dirname + "/uploads"))
 var wss = expressWs.getWss('/');
 
 const messageHistory = [{
@@ -35,8 +36,22 @@ app.get('/api/get_message_history/', (req, res) => {
     res.send(messageHistory)
 })
 
-app.post("/api/send_image", (req, res) => {
-    console.log(req);
+app.post("/api/upload", (req, res) => {
+    let file;
+    let uploadPath;
+
+    if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).send("No files were uploaded.");
+    }
+
+    file = req.files.image;
+    uploadPath = __dirname + "/uploads/" + file.name;
+
+    file.mv(uploadPath, (err) => {
+        if (err) return res.status(500).send(err);
+
+        res.send(`/uploads/${file.name}`);
+    })
 });
 
 

@@ -1,36 +1,30 @@
+/* init.js */
+
+export const $ = i => document.getElementById(i);
+
 /* private */
-const bubbleElem = (text, time, user) => {
+const bubbleElem = ( text, time, user ) => {
     const bubble = document.createElement("div");
     bubble.className = "msg-bubble";
 
-    const bubbleBody = document.createElement("p");
-    bubbleBody.innerText = text;
-    bubbleBody.className = "bubble-body";
-
-    const bubbleTime = document.createElement("p");
-    bubbleTime.innerText = time;
-    bubbleTime.className = "bubble-time";
-
-    const bubbleUser = document.createElement("p");
-    bubbleUser.innerText = user ? user + ", says:" : "";
-    bubbleUser.className = "bubble-user";
-
-
-    bubble.appendChild(bubbleUser);
-    bubble.appendChild(bubbleBody);
-    bubble.appendChild(bubbleTime);
-
-    return bubble;
+	bubble.innerHTML = `
+	<p class="bubble-body">${text}</p>
+	<p class="bubble-time">${time}</p>
+	<p class="bubble-user">${user ? user + ", says:" : ""}</p>`;
+	
+	return bubble;
 }
 
-export const sendMsg = () => {
+export const sendMsg = ( session, contentType, imageSrc ) => {
 	let msg = msgForm.elements.msgInput.value;
 
 	if ( msg != "" ) {
 
-        socket.send(JSON.stringify({
-            displayName: sessionStorage.getItem("displayName"),
-            body: msgForm.elements.msgInput.value
+        session.socket.send(JSON.stringify({
+            displayName: session.displayName,
+            body: msgForm.elements.msgInput.value,
+			contentType: contentType,
+			imageSrc: imageSrc
         }));
 
         msgForm.elements.msgInput.value = "";
@@ -39,9 +33,14 @@ export const sendMsg = () => {
 
 /* append a message to chatbox, as if it was received */
 export const receivedMsg = (msg) => {
-    let chatbox = document.getElementById("chatbox");
-    /* ?? why is this here ?? */
+    let chatbox = $("chatbox");
     let bubble = bubbleElem(msg.body, `${date.getHours()}:${date.getMinutes()}`, msg.displayName);
+
+	if (msg.contentType === "image") {
+		let image = document.createElement("img");
+		image.src = msg.imageSrc;
+		bubble.appendChild(image);
+	}
 
     if (msg.displayName === sessionStorage.getItem("displayName")) {
         bubble.classList.add("msg-bubble-my");
@@ -67,19 +66,28 @@ export const init = ( host ) => {
 			});
 		});
 
-	document.getElementById("currentUser").innerText = "User: " + clientSession.displayName;
+	$("currentUser").innerText = "User: " + clientSession.displayName;
 
 	return clientSession;
 };
 
-/* export const sendImage = (file) => {
-	const reader = new FileReader();
-	const xhr = new XMLHttpRequest();
+export const sendImage = ( host, session ) => {
+	let xhr = new XMLHttpRequest();
+	let file = $("imageUpload").files[0]
+	let formData = new FormData();
+	formData.append("image", file);
 
-	xhr.open("POST", "http://localhost:8989/api/send_image");
-	xhr.overrideMimeType("image/jpeg; charset=x-user-defined-binary");
-	reader.onload = e => {
-		xhr.send(e.target.result);
-	};
-	reader.readAsBinaryString(file);
-} */
+	console.log(file.name)
+	console.log(`${host}/api/upload`)
+
+	xhr.open("POST", `/api/upload`, true);
+	xhr.onload = () => {
+		if ( xhr.readyState === 4 && xhr.status === 200 ) {
+			console.log("something")
+		}
+	}
+	
+	xhr.send(formData);
+
+	sendMsg(session, "image", `http://${host}/api/images/${file.name}`);
+}

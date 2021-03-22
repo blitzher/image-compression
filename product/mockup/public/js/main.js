@@ -1,6 +1,5 @@
 import * as Util from "./init.js";
-
-/* const $ = (i) => document.getElementById(i) */
+import { $ } from "./init.js";
 
 const clientSession = Util.init( window.location.host );
 
@@ -12,12 +11,12 @@ let setDisplayNameForm = document.forms.setDisplayNameForm;
 if (clientSession.displayName === null) document.getElementById("setName").style.display = "flex";
 
 clientSession.socket.addEventListener("connect", () => {
-	socket.send(JSON.stringify({
-		displayName: sessionStorage.getItem("displayName"),
+	clientSession.socket.send(JSON.stringify({
+		displayName: clientSession.displayName,
 		body: "Hello, server!"
 	}));
 
-    socket.send();
+    clientSession.socket.send(clientSession);
 });
 
 clientSession.socket.addEventListener("message", e => {
@@ -26,13 +25,14 @@ clientSession.socket.addEventListener("message", e => {
 
 msgForm.addEventListener("submit", e => {
     e.preventDefault();
-    Util.sendMsg();
 
-	let image = document.getElementById("imageUpload");
-	if (image.value !== null) {
-		clientSession.sendImage(image.files[0]);
+	let image = $("imageUpload");
+	if (image !== null && image.value !== null) {
+		console.log("sending image...")
+		Util.sendImage(window.location.host, clientSession);
+	} else {
+		Util.sendMsg(clientSession, "text");
 	}
-	image.value = null;
 
     console.log(sessionStorage.getItem("displayName"));
 });
@@ -42,13 +42,13 @@ setDisplayNameForm.addEventListener("submit", e => {
     e.preventDefault();
     clientSession.displayName = setDisplayNameForm.setDisplayName.value;
     sessionStorage.setItem("displayName", clientSession.displayName);
-    document.getElementById("setName").style.display = "none";
-    document.getElementById("currentUser").innerText = "User: " + clientSession.displayName;
+    $("setName").style.display = "none";
+    $("currentUser").innerText = "User: " + clientSession.displayName;
 })
 
 clientSession.socket.addEventListener("error", () => {
 	location.reload();
-})
+});
 
 const previewImage = ( file ) => {
 	if (typeof imageUpload.files[0] !== "undefined") {
@@ -56,12 +56,12 @@ const previewImage = ( file ) => {
 		preview.src = URL.createObjectURL(file);
 		preview.className = "image-preview";
 
-		let chatbox = document.getElementById("msgForm");
+		let chatbox = $("msgForm");
 		chatbox.prepend(preview);
 
 		console.log(file.name)
 	}
 }
 
-const imageUpload = document.getElementById("imageUpload");
+const imageUpload = $("imageUpload");
 imageUpload.addEventListener("change", () => previewImage(imageUpload.files[0]));
