@@ -1,6 +1,7 @@
 /* init.js */
 
-export const $ = i => document.getElementById(i);
+export const $ = id => document.getElementById(id);
+export const _f = document.forms;
 
 /* private */
 const bubbleElem = (text, time, user) => {
@@ -18,25 +19,30 @@ const bubbleElem = (text, time, user) => {
 export const sendMsg = (session, contentType, imageSrc) => {
     let msg = msgForm.elements.msgInput.value.trim();
 
-    const sendTime = new Date().getTime();
-
     if (msg === "" && !imageSrc)
         return;
 
-    session.socket.send(JSON.stringify({
+    const sendTime = new Date().getTime();
+
+    let payload = contentType === "image" ? {
         displayName: session.displayName,
         body: msgForm.elements.msgInput.value,
         contentType: contentType,
         imageSrc: imageSrc,
         timestamp: sendTime
-    }));
+    } : {
+        displayName: session.displayName,
+        body: msgForm.elements.msgInput.value,
+        contentType: contentType,
+        timestamp: sendTime
+    };
+
+    session.socket.send(JSON.stringify(payload));
 
     msgForm.elements.msgInput.value = "";
 };
 
 /* append a message to chatbox, as if it was received */
-
-
 export const receivedMsg = (msg, tone) => {
     let chatbox = document.getElementById("chatbox");
 
@@ -89,6 +95,7 @@ export const init = (host) => {
         displayName: sessionStorage.getItem("displayName"),
         socket: new WebSocket(`ws://${host}`)
     };
+    
 
     /* get message history from server */
     fetch(window.location + 'api/get_message_history')

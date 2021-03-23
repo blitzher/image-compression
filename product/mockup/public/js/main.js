@@ -1,67 +1,69 @@
 import * as Util from "./init.js";
-import { $ } from "./init.js";
+import { $, _f } from "./init.js";
 
+(() => {
+    // Init application
+    let client = Util.init(window.location.host);
 
-let clientSession = Util.init(window.location.host);
+    /* get form elements from document */
+    let msgForm = _f.msgForm;
+    let setDisplayNameForm = _f.setDisplayNameForm;
 
-/* get form elements from document */
-let msgForm = document.forms.msgForm;
-let setDisplayNameForm = document.forms.setDisplayNameForm;
-
-/* unhide displayNameForm when displayName is not set */
-if (clientSession.displayName === null) {
-    $("setName").style.display = "flex";
-    $("displayNameInput").focus();
-}
-
-clientSession.socket.addEventListener("connect", () => {
-    clientSession.socket.send(JSON.stringify({
-        displayName: clientSession.displayName,
-        body: "Hello, server!"
-    }));
-
-    clientSession.socket.send(clientSession);
-});
-
-clientSession.socket.addEventListener("message", e => {
-    Util.receivedMsg(JSON.parse(e.data), true);
-});
-
-msgForm.addEventListener("submit", e => {
-    e.preventDefault();
-
-    let image = $("imageUpload").files;
-    if (image.length) {
-        console.log("sending image...")
-        Util.sendImage(window.location.host, clientSession);
-    } else {
-        Util.sendMsg(clientSession, "text");
+    /* unhide displayNameForm when displayName is not set */
+    if (client.displayName === null) {
+        $("setName").style.display = "flex";
+        $("displayNameInput").focus();
     }
-});
 
-/* when the display name has just been set */
-setDisplayNameForm.addEventListener("submit", e => {
-    e.preventDefault();
-    clientSession.displayName = setDisplayNameForm.setDisplayName.value;
-    sessionStorage.setItem("displayName", clientSession.displayName);
-    $("setName").style.display = "none";
-    $("currentUser").innerText = "User: " + clientSession.displayName;
-})
+    client.socket.addEventListener("connect", () => {
+        client.socket.send(JSON.stringify({
+            displayName: client.displayName,
+            body: "Hello, server!"
+        }));
 
-clientSession.socket.addEventListener("error", () => {
-    location.reload();
-});
+        client.socket.send(client);
+    });
 
-const previewImage = (file) => {
-    if (typeof imageUpload.files[0] !== "undefined") {
-        let preview = document.createElement("img");
-        preview.src = URL.createObjectURL(file);
-        preview.className = "image-preview";
+    client.socket.addEventListener("message", e => {
+        Util.receivedMsg(JSON.parse(e.data), true);
+    });
 
-        let chatbox = $("msgForm");
-        chatbox.prepend(preview);
+    msgForm.addEventListener("submit", e => {
+        e.preventDefault();
+
+        let image = $("imageUpload").files;
+        if (image.length) {
+            console.log("sending image...")
+            Util.sendImage(window.location.host, client);
+        } else {
+            Util.sendMsg(client, "text");
+        }
+    });
+
+    /* when the display name has just been set */
+    setDisplayNameForm.addEventListener("submit", e => {
+        e.preventDefault();
+        client.displayName = setDisplayNameForm.setDisplayName.value;
+        sessionStorage.setItem("displayName", client.displayName);
+        $("setName").style.display = "none";
+        $("currentUser").innerText = "User: " + client.displayName;
+    })
+
+    client.socket.addEventListener("error", () => {
+        location.reload();
+    });
+
+    const previewImage = (file) => {
+        if (typeof imageUpload.files[0] !== "undefined") {
+            let preview = document.createElement("img");
+            preview.src = URL.createObjectURL(file);
+            preview.className = "image-preview";
+
+            let chatbox = $("msgForm");
+            chatbox.prepend(preview);
+        }
     }
-}
 
-const imageUpload = $("imageUpload");
-imageUpload.addEventListener("change", () => previewImage(imageUpload.files[0]));
+    const imageUpload = $("imageUpload");
+    imageUpload.addEventListener("change", () => previewImage(imageUpload.files[0]))
+})()

@@ -1,11 +1,11 @@
 {
-  "name": "Websockets",
+  "name": "not-messenger",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon .",
-    "start": "node ."
+    "dev": "nodemon index.js 8989",
+    "start": "node index.js 80"
   },
   "keywords": [],
   "author": "",

@@ -5,7 +5,7 @@ const app = express();
 const expressWs = require('express-ws')(app);
 const fs = require("fs");
 
-const port = 8989;
+const port = process.argv[2];
 
 if (!fs.existsSync("uploads") || !fs.statSync("uploads").isDirectory()) {
     fs.mkdirSync("uploads");
@@ -15,7 +15,7 @@ app.use(fileUpload());
 app.use(express.json());
 app.use('/', express.static(__dirname + '/public'));
 app.use("/api/images", express.static(__dirname + "/uploads"))
-var wss = expressWs.getWss('/');
+let wss = expressWs.getWss('/');
 
 const messageHistory = [{
     displayName: "Cool Server😎",
