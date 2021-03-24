@@ -20,7 +20,7 @@ let wss = expressWs.getWss('/');
 const messageHistory = [{
     displayName: "Cool Server😎",
     timestamp: new Date().getTime(),
-    body: "🍔"
+    body: "🍔🍔"
 }];
 
 app.ws('/', (ws, req) => {
@@ -29,9 +29,19 @@ app.ws('/', (ws, req) => {
     ws.on('message', (message) => {
         console.log(message);
 
+        const msg = JSON.parse(message);
         wss.clients.forEach((client) => {
-            client.send(message);
+            if (msg.body === ";clear") {
+                messageHistory.splice(1,messageHistory.length);
+                client.send(";clear")
+                client.send(JSON.stringify(messageHistory[0]));
+            }
+            else {
+                client.send(message);
+            }
         });
+
+
 
         messageHistory.push(JSON.parse(message))
     });

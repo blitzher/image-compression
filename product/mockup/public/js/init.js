@@ -85,6 +85,7 @@ export const receivedMsg = (msg, tone) => {
 
   if (tone && msg.displayName !== sessionStorage.getItem("displayName")) {
     const audio = new Audio(`tone.mp3`);
+    audio.volume = 0.5;
     audio.play();
   }
 
