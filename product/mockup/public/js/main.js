@@ -25,14 +25,17 @@ import { $, _f } from "./init.js";
     });
 
     client.socket.addEventListener("message", e => {
-        Util.receivedMsg(JSON.parse(e.data), true);
+        if (e.data === ";clear")
+            $("chatbox").innerHTML = "";
+        else            
+            Util.receivedMsg(JSON.parse(e.data), true);
     });
 
     msgForm.addEventListener("submit", e => {
         e.preventDefault();
 
         let image = $("imageUpload").files;
-        if (image.length) {
+        if (image && image.length) {
             console.log("sending image...")
             Util.sendImage(window.location.host, client);
         } else {
