@@ -5,7 +5,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Not Messenger</title>
-
+    <script>
+      const $ = (id ) => document.getElementById(id);
+    </script>
     <link rel="stylesheet" href="./css/style.css" />
   </head>
 
@@ -62,15 +64,7 @@
           </span>
         </form>
       </div>
-      <div
-        style="
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          width: 30px;
-        "
-      >
+      <div class = "sidebar">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="24"
@@ -82,6 +76,7 @@
           stroke-linecap="round"
           stroke-linejoin="round"
           class="feather feather-volume-2"
+          onclick="$('volume').value = Number.parseInt($('volume').value) + 10;"
         >
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
           <path
@@ -100,6 +95,7 @@
           stroke-linecap="round"
           stroke-linejoin="round"
           class="feather feather-volume"
+          onclick="$('volume').value = Number.parseInt($('volume').value) - 10;"
         >
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
         </svg>
