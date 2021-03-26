@@ -1,70 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Not Messenger</title>
 
-    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
 
-</head>
-
-<body>
+  <body>
     <!-- input for name, hidden when displayName is set -->
     <div class="modal" style="display: none" id="setName">
-        <form name="setDisplayNameForm" class="inputModal">
-            <p>Display name</p>
-            <input type="text" name="setDisplayName" id="displayNameInput" style="margin:5px; width: 97.5%;">
-            <br>
-            <input type="submit" value="Confirm" style="width: 100%;">
-        </form>
+      <form name="setDisplayNameForm" class="inputModal">
+        <p>Display name</p>
+        <input
+          type="text"
+          name="setDisplayName"
+          id="displayNameInput"
+          style="margin: 5px; width: 97.5%"
+        />
+        <br />
+        <input type="submit" value="Confirm" style="width: 100%" />
+      </form>
     </div>
 
     <!-- wrapper for the whole page -->
-    <div id="chatboxWrapper">
-
+    <div id="app">
+      <div id="chatboxWrapper">
         <!-- the name of current user -->
         <div id="chatMenu">
-            <p id="currentUser"></p>
+          <p id="currentUser"></p>
         </div>
 
         <!-- the chatbox, with all past messages -->
         <div id="chatbox-box">
-            <div id="chatbox">
-            </div>
+          <div id="chatbox"></div>
         </div>
 
         <!-- input field from user, with text, images and send button -->
         <form id="msgForm" name="msgForm">
-            <span id="msgInputSpan">
-                <input 
-                    type="text" 
-                    name="msgInput" 
-                    id="msgInput"  
-                    autofocus="on" 
-                    autocomplete="off">
-                
-                <label 
-                    for="imageUpload" 
-                    id="uploadLabel">Upload</label>
+          <span id="msgInputSpan">
+            <input
+              type="text"
+              name="msgInput"
+              id="msgInput"
+              autofocus="on"
+              autocomplete="off"
+            />
 
-                <input 
-                    type="file" 
-                    name="imageUpload"
-                    id="imageUpload" 
-                    style="opacity: 0; width: 0;">
+            <label for="imageUpload" id="uploadLabel">Upload</label>
 
-                <input 
-                    type="submit" 
-                    value="Send">
-            </span>
+            <input
+              type="file"
+              name="imageUpload"
+              id="imageUpload"
+              style="opacity: 0; width: 0"
+            />
+
+            <input type="submit" value="Send" />
+          </span>
         </form>
+      </div>
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          width: 30px;
+        "
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="feather feather-volume-2"
+        >
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <path
+            d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"
+          />
+        </svg>
+        <input type="range" id="volume" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="feather feather-volume"
+        >
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+        </svg>
+      </div>
     </div>
 
     <!-- Entry (Load after UI DOM nodes) -->
     <script type="module" src="./js/main.js"></script>
-</body>
-
+  </body>
 </html>
