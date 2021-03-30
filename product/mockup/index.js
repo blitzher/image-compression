@@ -44,9 +44,8 @@ app.ws('/', (ws, req) => {
             }
         });
 
-
-
-        messageHistory.push(JSON.parse(message))
+        if (msg !== ";clear")
+            messageHistory.push(JSON.parse(message))
     });
 
 });
