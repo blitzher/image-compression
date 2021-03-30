@@ -4,6 +4,7 @@ const fileUpload = require("express-fileupload");
 const app = express();
 const expressWs = require('express-ws')(app);
 const fs = require("fs");
+const path = require("path");
 
 const port = process.argv[2];
 
@@ -14,7 +15,9 @@ if (!fs.existsSync("uploads") || !fs.statSync("uploads").isDirectory()) {
 app.use(fileUpload());
 app.use(express.json());
 app.use('/', express.static(__dirname + '/public'));
-app.use("/api/images", express.static(__dirname + "/uploads"))
+
+app.use('/plugin', express.static(__dirname + '/../plugin/static'));
+app.use("/api/images", express.static(__dirname + "/uploads"));
 let wss = expressWs.getWss('/');
 
 const messageHistory = [{
@@ -32,8 +35,8 @@ app.ws('/', (ws, req) => {
         const msg = JSON.parse(message);
         wss.clients.forEach((client) => {
             if (msg.body === ";clear") {
-                messageHistory.splice(1,messageHistory.length);
                 client.send(";clear")
+                messageHistory.splice(1,messageHistory.length);
                 client.send(JSON.stringify(messageHistory[0]));
             }
             else {
