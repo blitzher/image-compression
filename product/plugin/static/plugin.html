@@ -1,0 +1,13 @@
+<template>
+    <input id="toggle" type="button" value="Toggle modal">
+
+    <div id="modal" class="modal">
+        <link rel="stylesheet" href="plugin.css">
+
+        <div class="modal__view">
+            <h1>
+                <slot name="title"></slot>
+            </h1>
+        </div>
+    </div>
+</template>
