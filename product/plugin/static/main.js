@@ -46,7 +46,7 @@ const initPlugin = config => {
         customElements.define("plugin-modal", MyComponent);
     };
 
-    fetch("plugin.html")
+    fetch("plugin/plugin.html")
         .then(stream => stream.text())
         .then(text => define(text));
 

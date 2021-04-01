@@ -1,13 +1,14 @@
 <template>
-    <input id="toggle" type="button" value="Toggle modal">
+    <input id="toggle" type="button" value="Toggle modal" />
 
     <div id="modal" class="modal">
-        <link rel="stylesheet" href="plugin.css">
+        <link rel="stylesheet" href="plugin/plugin.css" />
 
         <div class="modal__view">
             <h1>
                 <slot name="title"></slot>
             </h1>
+            <p>Press 'Esc' to close...</p>
         </div>
     </div>
 </template>
