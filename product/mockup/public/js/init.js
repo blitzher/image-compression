@@ -114,6 +114,18 @@ export const init = (host) => {
   return clientSession;
 };
 
+function fileValidation(file) {    
+  // Allowing file type
+  var allowedExtensions = /(\.jpg|\.jpeg|\.png|\.gif)$/i;
+  
+  if (!allowedExtensions.exec(file)) {
+    alert('Invalid file type');
+    return false;
+  }else{
+    return true;
+  }
+}
+
 export const sendImage = (host, session) => {
   let xhr = new XMLHttpRequest();
   let file = $("imageUpload").files[0];
@@ -128,7 +140,7 @@ export const sendImage = (host, session) => {
   let formData = new FormData();
   formData.append("image", file);
 
-  if (typeof file !== "undefined") {
+  if (typeof file !== "undefined" && fileValidation(file.name) == true) {
     xhr.open("POST", `/api/upload`, true);
     xhr.onload = () => {
       if (xhr.readyState === 4 && xhr.status === 200) {
