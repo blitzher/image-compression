@@ -1,54 +1,54 @@
-const initPlugin = config => {
-    const define = html => {
+const initPlugin = (config) => {
+    const define = (html) => {
         class MyComponent extends HTMLElement {
             constructor() {
                 super();
 
-                const shadowRoot = this.attachShadow({ mode: "open" });
+                const shadowRoot = this.attachShadow({ mode: 'open' });
 
                 // Temporary wrapper element to extract fetched template.
-                let tempElem = document.createElement("div");
+                let tempElem = document.createElement('div');
                 tempElem.innerHTML = html;
 
                 let templateClone = tempElem.firstChild.content.cloneNode(true);
 
                 // Get the elements we want.
-                let modal = templateClone.getElementById("modal");
-                let toggle = templateClone.getElementById("toggle");
+                let modal = templateClone.getElementById('modal');
+                let toggle = templateClone.getElementById('toggle');
 
                 // Append toggle button to DOM.
                 shadowRoot.appendChild(toggle);
 
                 let removeModal = () => {
-                    if (shadowRoot.querySelector("#modal") != null) {
+                    if (shadowRoot.querySelector('#modal') != null) {
                         shadowRoot.removeChild(modal);
                     } else {
                         shadowRoot.appendChild(modal);
-                        shadowRoot.querySelector("#modal").focus();
+                        shadowRoot.querySelector('#modal').focus();
                     }
                 };
 
                 // Open/close modal (Add or remove).
-                toggle.addEventListener("click", () => {
+                toggle.addEventListener('click', () => {
                     removeModal();
                 });
 
-                document.addEventListener("keydown", ev => {
-                    if (ev.key === "Escape") {
+                document.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Escape') {
                         removeModal();
                     }
 
-                    document.removeEventListener("keydown", () => {});
+                    document.removeEventListener('keydown', () => {});
                 });
             }
         }
 
-        customElements.define("plugin-modal", MyComponent);
+        customElements.define('plugin-modal', MyComponent);
     };
 
-    fetch("plugin/plugin.html")
-        .then(stream => stream.text())
-        .then(text => define(text));
+    fetch('plugin/plugin.html')
+        .then((stream) => stream.text())
+        .then((text) => define(text));
 
     return config;
 };
