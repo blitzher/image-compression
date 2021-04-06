@@ -116,7 +116,7 @@ export const init = (host) => {
 
 function fileValidation(file) {    
   // Allowing file type
-  var allowedExtensions = /(\.jpg|\.jpeg|\.png|\.gif)$/i;
+  var allowedExtensions = /(\.jpg|\.jpeg|\.png|\.webp)$/i;
   
   if (!allowedExtensions.exec(file)) {
     alert('Invalid file type');
