@@ -1,2 +1,4 @@
 tabWidth: 4
-arrowParens: "avoid"
+arrowParens: "always"
+singleQuote: true
+trailingComma: "all"

@@ -1,0 +1,10 @@
+{
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "files.trimTrailingWhitespace": true,
+"editor.defaultFormatter": "esbenp.prettier-vscode",
+"html.format.indentInnerHtml": true,
+"html.format.wrapAttributesIndentSize": 22,
+"html.format.maxPreserveNewLines": 2,
+"prettier.configPath": "product\\.prettierrc.yaml"
+}
