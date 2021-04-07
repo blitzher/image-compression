@@ -1,10 +1,11 @@
 :host {
-    color: red;
+    color: white;
     background: grey;
 }
 
 :host h1 {
-    color: blue;
+    color: white;
+    margin: 0;
 }
 
 .modal {
@@ -19,12 +20,15 @@
     background-color: rgba(0, 0, 0, 0.1);
     z-index: 1000;
     margin: 0;
+    box-sizing: border-box;
 }
 
 .modal__view {
     width: 80vw;
     height: 80vh;
-    background-color: white;
+    background-color: #44475a;
     border-radius: 20px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.144);
+    box-sizing: border-box;
+    padding: 10px;
 }
