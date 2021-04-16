@@ -9,6 +9,25 @@
             </h1>
 
             <p>Press 'Esc' to close...</p>
+            <div>
+                <input name="upfile" type="file" id="upfile" accept="image/*"/><br><br>
+                <img id="preview" src="" alt="your image"/>
+            </div>
+        <div><br>
+        <form action="localhost:8989">
+            <label for="compSelect">Select compression method:</label>
+            <select id="compSelect" name="compSelect">
+                <option value="default">Default</option>
+                <option value="preset 1">Preset 1</option>
+                <option value="preset 2">Preset 2</option>
+                <option value="preset 3">Preset 3</option>
+                <option value="custom">Custom</option>
+            </select>
+            <input type="submit" value="Compress" />
+        </form>
+        </div>
+        <div>
+            <input type="submit" value="Send image">
         </div>
     </div>
 </template>

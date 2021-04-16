@@ -18,7 +18,6 @@ const initPlugin = (config) => {
 
                 // Append toggle button to DOM.
                 shadowRoot.appendChild(toggle);
-
                 let removeModal = () => {
                     if (shadowRoot.querySelector('#modal') != null) {
                         shadowRoot.removeChild(modal);
@@ -40,6 +39,11 @@ const initPlugin = (config) => {
 
                     document.removeEventListener('keydown', () => {});
                 });
+                const upfile = templateClone.getElementById('upfile');
+                const preview = templateClone.getElementById('preview');
+                upfile.addEventListener('change', () => {
+                    preview.src = window.URL.createObjectURL(upfile.files[0]);
+                });
             }
         }
 
@@ -48,7 +52,9 @@ const initPlugin = (config) => {
 
     fetch('plugin/plugin.html')
         .then((stream) => stream.text())
-        .then((text) => define(text));
+        .then((text) => {
+            define(text);
+        });
 
     return config;
 };
