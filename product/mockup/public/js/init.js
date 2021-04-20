@@ -172,7 +172,7 @@ export const sendImage = (host, session) => {
     const fileSize = file.size / Math.pow(2, 20);
     if (fileSize > 5) {
         $('imageUpload').value = null; //does not work
-        alert('Filesize exceeds file limit');
+        //alert('Filesize exceeds file limit');
         return;
     }
 
