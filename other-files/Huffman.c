@@ -2,28 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-typedef struct
-{
-    char value;
-    int freq;
-} ElemFreq;
-
-typedef struct
-{
-    ElemFreq elem;
-    HuffmanNode *left;
-    HuffmanNode *right;
-} HuffmanNode;
-
-int array_len(char *);            /*Count the length of array*/
-int count_elements(char *, char); /*Count the nr of times a character occur*/
-char *unique_array(char *);
-void huffman(char *);
-int ElemFreq_compare(const void *, const void *);
-
-ElemFreq *get_element_frequency(char *, char *);
-
-void print_ElemFreq(ElemFreq);
+#include "Huffman.h"
 
 int main(void)
 {
@@ -69,7 +48,7 @@ char *unique_array(char *string)
     int unique = 0;
     int n = array_len(string);
 
-    char *unique_elements = (char *)malloc(n * sizeof(char));
+    char *unique_elements = (char *)calloc(n, sizeof(char));
 
     for (i = 0; i < n; i++) /*Ensure that we check all elements in the array*/
     {
@@ -112,10 +91,56 @@ int ElemFreq_compare(const void *a, const void *b)
 
 void huffman(char *string)
 {
-    int i = 0;
+    uint i;
+    HuffmanNode *currentNode;
     char *unique_chars = unique_array(string);
+    uint unique_len = array_len(unique_chars);
     ElemFreq *element_frequencies = get_element_frequency(string, unique_chars);
-    qsort(element_frequencies, array_len(unique_chars), sizeof(ElemFreq), ElemFreq_compare);
+    HuffmanNode **tree = (HuffmanNode **)calloc(unique_len + 1, sizeof(HuffmanNode *));
+
+    /* element_frequencies is now a sorted descending array of each element and its frequency */
+    qsort(element_frequencies, unique_len, sizeof(ElemFreq), ElemFreq_compare);
+
+    /* Setup initial tree nodes */
+    for (i = 0; i < unique_len; i++)
+    {
+
+        tree[i] = (HuffmanNode *)calloc(1, sizeof(HuffmanNode));
+        currentNode = tree[i];
+        currentNode->elem.value = element_frequencies[i].value;
+        currentNode->elem.freq = element_frequencies[i].freq;
+        print_ElemFreq(currentNode->elem);
+    }
+
+    uint isNotEmpty = (unique_len > 1);
+    uint count;
+
+    HuffmanNode *tempNode;
+    HuffmanNode *left, *right;
+    HuffmanNode internal;
+
+    for (i = unique_len; i > 0; i--)
+    {
+        right = tree[i];
+        left = tree[i - 1];
+
+        internal = *(HuffmanNode *)calloc(1, sizeof(HuffmanNode));
+        internal.right = right;
+        internal.left = left;
+
+        internal.elem.freq = right->elem.freq + left->elem.freq;
+
+        /* INSERT INTO TREE
+            * Find where it needs to be - keep sorted by frequency
+            * Move all elements which have lower frequency one space right
+         */
+        for (; i > 0; i--)
+        {
+            /*insert(); Tænker det skal være en funktion som tager et array og et ellement og indsætter det*/
+        }
+
+        /**/
+    }
 }
 
 void print_ElemFreq(ElemFreq elem)
