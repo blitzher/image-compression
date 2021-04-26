@@ -18,7 +18,7 @@ const initPlugin = (config) => {
 
                 // Append toggle button to DOM.
                 shadowRoot.appendChild(toggle);
-                let removeModal = () => {
+                let toggleModal = () => {
                     if (shadowRoot.querySelector('#modal') != null) {
                         shadowRoot.removeChild(modal);
                     } else {
@@ -29,21 +29,39 @@ const initPlugin = (config) => {
 
                 // Open/close modal (Add or remove).
                 toggle.addEventListener('click', () => {
-                    removeModal();
+                    toggleModal();
                 });
 
                 document.addEventListener('keydown', (ev) => {
                     if (ev.key === 'Escape') {
-                        removeModal();
+                        toggleModal();
                     }
 
                     document.removeEventListener('keydown', () => {});
                 });
-                const upfile = templateClone.getElementById('upfile');
-                const preview = templateClone.getElementById('preview');
-                upfile.addEventListener('change', () => {
-                    preview.src = window.URL.createObjectURL(upfile.files[0]);
+
+                const uploadField = document.getElementById('imageUpload');
+                const imagePreview = templateClone.getElementById(
+                    'imagePreview',
+                );
+                uploadField.removeEventListener('change', () => {});
+                uploadField.addEventListener('change', () => {
+                    const file = uploadField.files[0];
+                    /* 2^10 = 1024,
+					   2^20 = 2^10 * 2^10 = ~1000 * ~1000 ~= 1.000.000*/
+                    const fileSize =
+                        file.size / Math.pow(2, 20); /* Get file size in MB */
+                    if (fileSize >= 0) {
+                        toggleModal();
+
+                        console.log(imagePreview);
+                        imagePreview.src = window.URL.createObjectURL(file);
+                    } else {
+                        /* send the image */
+                    }
                 });
+                //const upfile = templateClone.getElementById('upfile');
+                const preview = templateClone.getElementById('imageUpload');
             }
         }
 

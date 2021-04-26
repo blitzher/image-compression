@@ -1,5 +1,5 @@
 <template>
-    <input id="toggle" class="toggle" type="button" value="Toggle modal" />
+     <input id="toggle" class="toggle" type="button" value="Toggle modal" />
 
     <div id="modal" class="modal">
         <link rel="stylesheet" href="plugin/plugin.css" />
@@ -9,25 +9,29 @@
             </h1>
 
             <p>Press 'Esc' to close...</p>
+            <div class="image-wrapper">
             <div>
-                <input name="upfile" type="file" id="upfile" accept="image/*"/><br><br>
-                <img id="preview" src="" alt="your image"/>
+                <!-- <input name="upfile" type="file" id="upfile" accept="image/*"/><br><br>-->
+                <img id="imagePreview" src="" alt="your image"/>
+            </div>
             </div>
         <div><br>
-        <form action="localhost:8989">
-            <label for="compSelect">Select compression method:</label>
-            <select id="compSelect" name="compSelect">
+            <label class="dropdown-text" for="compSelect">Select compression method:</label>
+            <select id="compSelect" name="compSelect" class="dropdown">
+                <div class="dropdown-options">
                 <option value="default">Default</option>
                 <option value="preset 1">Preset 1</option>
                 <option value="preset 2">Preset 2</option>
                 <option value="preset 3">Preset 3</option>
                 <option value="custom">Custom</option>
+                </div>
             </select>
-            <input type="submit" value="Compress" />
-        </form>
+
         </div>
         <div>
-            <input type="submit" value="Send image">
+            <button id="compress" class="plugin-btn">Compress</button>
+            <button id="send-image" class="plugin-btn">Send</button>
+            <button class="plugin-btn" id="cancelModal" onclick="function closeModalWithin(toggleModal)">Cancel</button>
         </div>
     </div>
 </template>

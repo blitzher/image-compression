@@ -24,8 +24,8 @@
 }
 
 .modal__view {
-    width: 80vw;
-    height: 80vh;
+    width: relative;
+    height: relative;
     background-color: #44475a;
     border-radius: 20px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.144);
@@ -34,9 +34,48 @@
 }
 
 img {
-    max-width: 600px;
+    max-height: min(50vw, 50vh);
+    max-width: min(50vw, 50vh);
 }
-input[type='file'] {
+.image-wrapper {
+    width: min(50vw, 50vh);
+    height: min(50vw, 50vh);
+    display: grid;
+    place-items: center;
+    background-color: #202020;
+    margin: auto;
+}
+
+.plugin-btn {
+    background-color: #282a36;
+    border: none;
+    border-radius: 5px;
+    color: #bd93f9;
     padding: 10px;
-    background: #2d2d2d;
+    margin: 5px;
+}
+
+#cancelModal {
+    float: right;
+}
+.plugin-btn:hover {
+    background-color: #777b97;
+    transition: ease-in-out 0.3s;
+}
+
+.dropdown {
+    background-color: #282a36;
+    border: none;
+    border-radius: 5px;
+    color: #bd93f9;
+    padding: 10px;
+    margin: 5px;
+    position: relative;
+    min-width: 100px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+.dropdown-options {
+    background-color: #282a36;
 }
