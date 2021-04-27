@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>JPEG On A Canvas</title>
+        <script src="jpeg.js"></script>
+    </head>
+    <body>
+        <canvas style="display: none"> </canvas>
+
+        <canvas id="zoom" width="256" height="256"></canvas>
+        <script>
+            const canvas = document.querySelector('canvas');
+            const ctx = canvas.getContext('2d');
+
+            let imageData = ctx.createImageData(8, 8);
+
+            let mario = () => {
+                let whi = [255, 255, 255],
+                    red = [236, 27, 35],
+                    blu = [0, 0, 254],
+                    bro = [69, 34, 0],
+                    yel = [254, 193, 13],
+                    bla = [0, 0, 0],
+                    sun = [250, 236, 1];
+
+                return [
+                    [
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        red,
+                        red,
+                        red,
+                        red,
+                        red,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        red,
+                        red,
+                        red,
+                        red,
+                        red,
+                        red,
+                        red,
+                        red,
+                        red,
+                        whi,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        bro,
+                        bro,
+                        bro,
+                        yel,
+                        yel,
+                        bla,
+                        yel,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        whi,
+                        bro,
+                        yel,
+                        bro,
+                        yel,
+                        yel,
+                        yel,
+                        bla,
+                        yel,
+                        yel,
+                        yel,
+                        whi,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        whi,
+                        bro,
+                        yel,
+                        bro,
+                        bro,
+                        yel,
+                        yel,
+                        yel,
+                        bla,
+                        yel,
+                        yel,
+                        yel,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        bro,
+                        yel,
+                        yel,
+                        yel,
+                        yel,
+                        bla,
+                        bla,
+                        bla,
+                        bla,
+                        whi,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        yel,
+                        yel,
+                        yel,
+                        yel,
+                        yel,
+                        yel,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        red,
+                        red,
+                        blu,
+                        red,
+                        red,
+                        blu,
+                        red,
+                        red,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        whi,
+                        red,
+                        red,
+                        red,
+                        blu,
+                        red,
+                        red,
+                        blu,
+                        red,
+                        red,
+                        red,
+                        whi,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        red,
+                        red,
+                        red,
+                        red,
+                        blu,
+                        blu,
+                        blu,
+                        blu,
+                        red,
+                        red,
+                        red,
+                        red,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        yel,
+                        yel,
+                        red,
+                        blu,
+                        sun,
+                        blu,
+                        blu,
+                        sun,
+                        blu,
+                        red,
+                        yel,
+                        yel,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        yel,
+                        yel,
+                        yel,
+                        blu,
+                        blu,
+                        blu,
+                        blu,
+                        blu,
+                        blu,
+                        yel,
+                        yel,
+                        yel,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        yel,
+                        yel,
+                        blu,
+                        blu,
+                        blu,
+                        blu,
+                        blu,
+                        blu,
+                        blu,
+                        blu,
+                        yel,
+                        yel,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        blu,
+                        blu,
+                        blu,
+                        whi,
+                        whi,
+                        blu,
+                        blu,
+                        blu,
+                        blu,
+                        whi,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        whi,
+                        bro,
+                        bro,
+                        bro,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        bro,
+                        bro,
+                        bro,
+                        whi,
+                        whi,
+                        whi,
+                    ],
+                    [
+                        whi,
+                        whi,
+                        bro,
+                        bro,
+                        bro,
+                        bro,
+                        whi,
+                        whi,
+                        whi,
+                        whi,
+                        bro,
+                        bro,
+                        bro,
+                        bro,
+                        whi,
+                        whi,
+                    ],
+                ];
+            };
+
+            let mario1 = mario()
+                .slice(0, 8)
+                .map((x) => x.slice(0, 8));
+            let mario2 = mario()
+                .slice(0, 8)
+                .map((x) => x.slice(8, 16));
+            let mario3 = mario()
+                .slice(8, 16)
+                .map((x) => x.slice(0, 8));
+            let mario4 = mario()
+                .slice(8, 16)
+                .map((x) => x.slice(8, 16));
+
+            let cutImage = (mtx) => {
+                let component = [[], [], [], [], [], [], [], []];
+
+                for (i = 0; i < 8; i += i++) {
+                    for (j = 0; j < 8; j++) {}
+                }
+
+                console.log(out);
+            };
+
+            console.log(mario1);
+
+            //cutImage(mario());
+
+            //console.log(imageData.data.length / 4);
+            //console.log(mario1.length);
+
+            // let newPix = dct(pixels, 8)
+            //     .flat()
+            //     .map((x) => [...YCbCr2rgb([x, 255, 255]), 255]);
+
+            let mario1y = mario1.flat().map((x) => [...rgb2YCbCr(x), 255]);
+            //console.log(mario1y);
+
+            let mario1dct = () => {
+                let Y = [[], [], [], [], [], [], [], []],
+                    Cb = [[], [], [], [], [], [], [], []],
+                    Cr = [[], [], [], [], [], [], [], []];
+
+                let rows = [];
+
+                for (i = 0; i < 8; i++) {
+                    rows.push(mario1y.slice(i * 8, i * 8 + 8));
+                }
+
+                for (i = 0; i < 8; i++) {
+                    for (j = 0; j < 8; j++) {
+                        Y[i][j] = rows[i][j][0];
+                        Cb[i][j] = rows[i][j][1];
+                        Cr[i][j] = rows[i][j][2];
+                    }
+                }
+
+                let dY = dct(Y, 8),
+                    dCb = dct(Cb, 8),
+                    dCr = dct(Cr, 8);
+
+                let fdY = dY.flat(),
+                    fdCb = dCb.flat(),
+                    fdCr = dCr.flat();
+
+                return fdY.map((_, i) => [fdY[i], fdCb[i], fdCr[i]]);
+            };
+
+            let marioFunTimes = mario1dct()
+                .map((x) => [...x, 255])
+                .flat();
+
+            //console.log('dct mario', mario1dct().flat());
+
+            const drawMario = (isDct) => {
+                for (i = 0; i < imageData.data.length; i += 4) {
+                    imageData.data[i + 0] =
+                        (!isDct ? mario1y.flat() : marioFunTimes)[i + 0] + 128;
+                    imageData.data[i + 1] =
+                        (!isDct ? mario1y.flat() : marioFunTimes)[i + 1] + 128;
+                    imageData.data[i + 2] =
+                        (!isDct ? mario1y.flat() : marioFunTimes)[i + 2] + 128;
+                    imageData.data[i + 3] =
+                        (!isDct ? mario1y.flat() : marioFunTimes)[i + 3] + 128;
+                }
+                ctx.save();
+
+                ctx.putImageData(imageData, 0, 0);
+
+                let zoomCtx = document.getElementById('zoom').getContext('2d');
+                zoomCtx.save();
+                zoomCtx.imageSmoothingEnabled = false;
+                zoomCtx.scale(32, 32);
+                zoomCtx.drawImage(canvas, 0, 0);
+                zoomCtx.restore();
+                ctx.restore();
+            };
+
+            //drawMario(true);
+        </script>
+        <span>
+            <button onclick="drawMario(true)">DCT</button>
+            <button onclick="drawMario(false)">Normal -ish</button>
+        </span>
+    </body>
+</html>

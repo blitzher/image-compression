@@ -40,6 +40,8 @@ const initPlugin = (config) => {
                     document.removeEventListener('keydown', () => {});
                 });
 
+                templateClone.getElementById("cancelModal").addEventListener("click", () => toggleModal())
+
                 const uploadField = document.getElementById('imageUpload');
                 const imagePreview = templateClone.getElementById(
                     'imagePreview',
