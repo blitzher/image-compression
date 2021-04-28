@@ -40,12 +40,40 @@ const initPlugin = (config) => {
                     document.removeEventListener('keydown', () => {});
                 });
 
-                templateClone.getElementById("cancelModal").addEventListener("click", () => toggleModal())
+                templateClone
+                    .getElementById('cancelModal')
+                    .addEventListener('click', () => toggleModal());
 
                 const uploadField = document.getElementById('imageUpload');
-                const imagePreview = templateClone.getElementById(
-                    'imagePreview',
-                );
+                // const imagePreview = templateClone.getElementById(
+                //     'imagePreview',
+                // );
+                const canvas = templateClone.getElementById('imagePreview');
+
+                function grayscale(canvas) {
+                    const ctx = canvas.getContext('2d');
+                    const imageData = ctx.getImageData(
+                        0,
+                        0,
+                        canvas.width,
+                        canvas.height,
+                    );
+
+                    for (let i = 0; i < imageData.data.length; i += 4) {
+                        let avg =
+                            (imageData.data[i] +
+                                imageData.data[i + 1] +
+                                imageData.data[i + 2]) /
+                            3;
+
+                        imageData.data[i] = avg;
+                        imageData.data[i + 1] = avg;
+                        imageData.data[i + 2] = avg;
+                    }
+
+                    ctx.putImageData(imageData, 0, 0);
+                }
+
                 uploadField.removeEventListener('change', () => {});
                 uploadField.addEventListener('change', () => {
                     const file = uploadField.files[0];
@@ -56,14 +84,32 @@ const initPlugin = (config) => {
                     if (fileSize >= 0) {
                         toggleModal();
 
-                        console.log(imagePreview);
-                        imagePreview.src = window.URL.createObjectURL(file);
+                        const ctx = canvas.getContext('2d');
+
+                        const image = new Image();
+                        image.onload = () => {
+                            canvas.width = image.width;
+                            canvas.height = image.height;
+                            ctx.drawImage(image, 0, 0);
+                            grayscale(canvas);
+
+                            let presetOptions = templateClone.getElementById(
+                                'compSelect',
+                            );
+                            presetOptions.addEventListener('change', (ev) => {
+                                let preset = ev.value;
+                            });
+                        };
+                        image.crossOrigin = 'anonymous';
+                        image.src = window.URL.createObjectURL(file);
+
+                        //console.log(imagePreview);
                     } else {
                         /* send the image */
                     }
                 });
                 //const upfile = templateClone.getElementById('upfile');
-                const preview = templateClone.getElementById('imageUpload');
+                //const preview = templateClone.getElementById('imageUpload');
             }
         }
 
