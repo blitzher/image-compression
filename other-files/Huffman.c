@@ -7,9 +7,6 @@
 int main(void)
 {
     char array[] = "aaawwqqqsscaaffaqzzjjjktpo";
-    printf("%d\n", array_len(array));
-    printf("%d\n", count_elements(array, 'a'));
-    printf("%s\n", unique_array(array));
     huffman(array);
     return 0;
 }
@@ -91,7 +88,7 @@ int ElemFreq_compare(const void *a, const void *b)
 
 void huffman(char *string)
 {
-    uint i, _;
+    uint i;
     HuffmanNode *currentNode;
     char *unique_chars = unique_array(string);
     uint unique_len = array_len(unique_chars);
@@ -115,16 +112,16 @@ void huffman(char *string)
         currentNode->elem.freq = element_frequencies[i].freq;
 		currentNode->left = &nullNode;
 		currentNode->right = &nullNode;
-        print_ElemFreq(currentNode->elem);
+        /* print_ElemFreq(currentNode->elem); */
     }
 
-    uint j, k, l;
+    uint j, k;
 
     HuffmanNode *left, *right;
     HuffmanNode *internal;
 
     /* Main  */
-    for (i = unique_len - 1; i >= 0; i--)
+    for (i = unique_len - 1; i > 0; i--)
     {
         left = tree[i - 1];
         right = tree[i];
@@ -136,24 +133,31 @@ void huffman(char *string)
         internal->elem.freq = right->elem.freq + left->elem.freq;
         /* Find where it needs to be - keep sorted by frequency */
         for (j = i-1; j > 0; j--) {
-            if(tree[j]->elem.freq > internal->elem.freq)
+            if(tree[j]->elem.freq > internal->elem.freq) {
+                j++;
                 break;
+            }
         }
-        printf("j = %d\n", j);
+
+/*         printf("__________________\n");
+        printf("i = %d, j = %d\n", i, j); */
 
 
         /* Move all elements which have lower frequency one space right */
-        for (k = unique_len-1; k >= j; k--){
-            printf("k = %d ", k);
+        for (k = unique_len-1; k >= j; k--) {
+            /* printf("k = %d ", k); */
             tree[k+1] = tree[k];
 			if (k == 0) break;
         }
-        /* set last left and right to  */
-        printf("k = %d\n", k);
-
+        /* printf("\n\n"); */
 
         /* Insert the internal node into tree */
         tree[j] = internal;
+
+        /* 
+        DEBUGGING
+
+
         printf("\n");
         printf("i = %d\n", i);
         print_ElemFreq(internal->elem);
@@ -163,31 +167,22 @@ void huffman(char *string)
         print_ElemFreq(internal->right->elem);
         printf("\n");
 
-
-        for (l = 0; l < unique_len; l++)
+         for (l = 0; l < i; l++)
         {
 
             currentNode = tree[l];
 
-            if (currentNode->elem.value != 0) {
+            if (currentNode->elem.value > 0) {
                 print_ElemFreq(currentNode->elem); }
             else
                 print_HuffmanTree(currentNode);
         }
-        printf("__________________\n");
-        scanf("%hu", &_);
+        
+        getchar();
+        */
 
     }
-
-    for (i = 0; i < unique_len; i++)
-    {
-
-        currentNode = tree[i];
-
-    }
-
-    print_HuffmanTree(*tree);
-
+    print_HuffmanTree(tree[0]);
 }
 void print_ElemFreq(ElemFreq elem)
 {
@@ -204,9 +199,11 @@ void print_HuffmanTree_internal(HuffmanNode *root, uint prefixWidth) {
     HuffmanNode *left, *right;
     left = root->left;
     right = root->right;
-    if (left->elem.value > 0)
+    
+    if (left->elem.freq > 0)
         print_HuffmanTree_internal(root->left, prefixWidth + 1);
-    if (right->elem.value > 0)
+    
+    if (right->elem.freq > 0)
         print_HuffmanTree_internal(root->right, prefixWidth + 1);
 
 
@@ -215,7 +212,7 @@ void print_HuffmanTree_internal(HuffmanNode *root, uint prefixWidth) {
 
 }
 void print_HuffmanTree(HuffmanNode *root) {
-    printf("%c|%2d yolo\n", root->elem.value, root->elem.freq);
+    printf("%c|%2d\n", root->elem.value, root->elem.freq);
     print_HuffmanTree_internal(root->left, 1);
     print_HuffmanTree_internal(root->right, 1);
 
