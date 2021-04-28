@@ -13,7 +13,13 @@
         <!-- Plugin from "remote" source -->
         <script src="/plugin/main.js"></script>
         <script>
-            initPlugin();
+            initPlugin({
+                '#modal div': {
+                    'background-color': 'lightblue',
+                    padding: '50px',
+                    'border-radius': '0px',
+                },
+            });
         </script>
     </head>
 
