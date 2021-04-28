@@ -72,7 +72,41 @@ const initPlugin = (config) => {
                     }
 
                     ctx.putImageData(imageData, 0, 0);
+                    console.log("grey")
                 }
+
+                let presetOptions = templateClone.getElementById('compSelect');
+                const qualityConfig = {
+                    preset: "default"
+                }
+
+                const image = new Image();
+
+                const optionsWrapper = templateClone.querySelector('[class="options-wrapper"]');
+
+                presetOptions.addEventListener('change', (ev) => {
+                    let value = ev.target.value;
+                    qualityConfig.preset = value;
+                    console.log(qualityConfig.preset);
+                    ev.preventDefault();
+
+                    switch (qualityConfig.preset) {
+                        case "grayscale":
+                            grayscale(canvas);
+                            optionsWrapper.style.width = 0;
+                            break;
+                        case "custom":
+                            optionsWrapper.style.width = "100%";
+                            break;
+                        default:
+                            {
+                                let ctx = canvas.getContext("2d");
+                                ctx.drawImage(image, 0, 0);
+                                optionsWrapper.style.width = 0;
+                            }
+                            break;
+                    }
+                });
 
                 uploadField.removeEventListener('change', () => {});
                 uploadField.addEventListener('change', () => {
@@ -86,24 +120,14 @@ const initPlugin = (config) => {
 
                         const ctx = canvas.getContext('2d');
 
-                        const image = new Image();
                         image.onload = () => {
                             canvas.width = image.width;
                             canvas.height = image.height;
                             ctx.drawImage(image, 0, 0);
-                            grayscale(canvas);
-
-                            let presetOptions = templateClone.getElementById(
-                                'compSelect',
-                            );
-                            presetOptions.addEventListener('change', (ev) => {
-                                let preset = ev.value;
-                            });
                         };
+
                         image.crossOrigin = 'anonymous';
                         image.src = window.URL.createObjectURL(file);
-
-                        //console.log(imagePreview);
                     } else {
                         /* send the image */
                     }

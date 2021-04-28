@@ -278,7 +278,7 @@ input[type='submit']:hover,
         width: 100vw;
         height: 100vh;
         border-radius: 0;
-        padding: 20px;
+        padding: 5px;
         border: none;
     }
 
