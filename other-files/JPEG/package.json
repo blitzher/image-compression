@@ -1,0 +1,9 @@
+{
+  "name": "JPEG",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "gpu.js": "^2.11.3"
+  }
+}
