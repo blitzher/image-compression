@@ -4,6 +4,36 @@ const initPlugin = (config) => {
             constructor() {
                 super();
 
+                function jss(root) {
+                    root.querySelector('#modal div').style.backgroundColor =
+                        'lightblue';
+
+                    root.querySelector('.image-wrapper').style.backgroundColor =
+                        'green';
+                }
+
+                function applyCustomStyle(root, customStyleObject) {
+                    const selectors = Object.keys(customStyleObject);
+
+                    for (let selector of selectors) {
+                        const selectorStyle = customStyleObject[selector];
+                        let formattedStyle = '';
+                        for (let [key, val] of Object.entries(selectorStyle)) {
+                            formattedStyle += `${key}:${val};`;
+                        }
+
+                        root.querySelector(
+                            selector,
+                        ).style.cssText += formattedStyle;
+                    }
+                }
+
+                let obj = {
+                    a: 2,
+                    b: 7,
+                    c: -23,
+                };
+
                 const shadowRoot = this.attachShadow({ mode: 'open' });
 
                 // Temporary wrapper element to extract fetched template.
@@ -24,6 +54,7 @@ const initPlugin = (config) => {
                     } else {
                         shadowRoot.appendChild(modal);
                         shadowRoot.querySelector('#modal').focus();
+                        applyCustomStyle(shadowRoot, config);
                     }
                 };
 
