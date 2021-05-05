@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" data-framework="backbonejs">
+    <head>
+        <meta charset="utf-8" />
+        <title>Backbone.js • TodoMVC</title>
+        <link rel="stylesheet" href="./node_modules/mocha/mocha.css" />
+    </head>
+    <body>
+        <script src="./static/main.js"></script>
+
+        <div id="mocha"></div>
+        <div id="mycanvas"></div>
+
+        <canvas id="thisCanvas" width="25" height="25"></canvas>
+
+        <!-- scripts -->
+        <script src="./node_modules/mocha/mocha.js"></script>
+        <script>
+            mocha.ui('bdd');
+            mocha.reporter('html');
+        </script>
+        <script src="./spec.js"></script>
+        <script>
+            mocha.run();
+        </script>
+    </body>
+</html>
