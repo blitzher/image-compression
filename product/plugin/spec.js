@@ -8,9 +8,10 @@ function insertPixel(imageData, pixelData, start) {
 	});
 }
 
-const canvas = document.createElement("canvas");
-canvas.width = 2;
-canvas.height = 2;
+const canvas = document.getElementById("thisCanvas");
+//document.createElement("canvas");
+//canvas.width = 200;
+//canvas.height = 200;
 
 describe("Grayscale compression", () => {
 	it("should convert a non grayscale image to grayscale", () => {
@@ -20,23 +21,39 @@ describe("Grayscale compression", () => {
 			0,
 			canvas.width,
 			canvas.height,
-		);
+        );
 
-		for (let i = 0; i < imageData.data.length; i += 4) {
+        let data = imageData.data
+
+		for (let i = 0; i < data.length; i += 4) {
 			let avg =
 				Math.floor(Math.random() * 255);
 
-			imageData.data[i] = avg;
-			imageData.data[i + 1] = avg;
-			imageData.data[i + 2] = avg;
-		}
+			data[i] = avg * 2;
+			data[i + 1] = avg / 2;
+            data[i + 2] = avg / 3;
+            data[i + 3] = 255;
+        }
 
-		console.log(imageData);
-		ctx.putImageData(imageData, 0, 0);
-		setTimeout(() => {
-			console.log(ctx.getImageData(0, 0, canvas.width, canvas.height));
-		}, 1000)
+        let input = data.slice();
 
+        ctx.putImageData(imageData, 0, 0);
+
+        for (let i = 0; i < data.length; i += 4) {
+			let avg = (data[i] + data[i+1] + data[i+2])/3;
+
+			data[i] = avg;
+			data[i + 1] = avg;
+            data[i + 2] = avg;
+            data[i + 3] = 255;
+        }
+
+        ctx.putImageData(imageData, 0, 0)
+
+        let output = data.slice();
+
+        console.log(input);
+		console.log(output);
 	})
 	it("should say ur mum my dog", () => {
 		console.log("ur mum my dog");
