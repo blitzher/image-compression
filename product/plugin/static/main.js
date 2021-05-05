@@ -1,3 +1,31 @@
+
+const hello = "hiiii"
+
+function grayscale(canvas) {
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+    );
+
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        let avg =
+            (imageData.data[i] +
+                imageData.data[i + 1] +
+                imageData.data[i + 2]) /
+            3;
+
+        imageData.data[i] = avg;
+        imageData.data[i + 1] = avg;
+        imageData.data[i + 2] = avg;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+    console.log("grey")
+}
+
 const initPlugin = (config) => {
     const define = (html) => {
         class MyComponent extends HTMLElement {
@@ -37,7 +65,7 @@ const initPlugin = (config) => {
                         toggleModal();
                     }
 
-                    document.removeEventListener('keydown', () => {});
+                    document.removeEventListener('keydown', () => { });
                 });
 
                 templateClone
@@ -49,31 +77,6 @@ const initPlugin = (config) => {
                 //     'imagePreview',
                 // );
                 const canvas = templateClone.getElementById('imagePreview');
-
-                function grayscale(canvas) {
-                    const ctx = canvas.getContext('2d');
-                    const imageData = ctx.getImageData(
-                        0,
-                        0,
-                        canvas.width,
-                        canvas.height,
-                    );
-
-                    for (let i = 0; i < imageData.data.length; i += 4) {
-                        let avg =
-                            (imageData.data[i] +
-                                imageData.data[i + 1] +
-                                imageData.data[i + 2]) /
-                            3;
-
-                        imageData.data[i] = avg;
-                        imageData.data[i + 1] = avg;
-                        imageData.data[i + 2] = avg;
-                    }
-
-                    ctx.putImageData(imageData, 0, 0);
-                    console.log("grey")
-                }
 
                 let presetOptions = templateClone.getElementById('compSelect');
                 const qualityConfig = {
@@ -108,11 +111,11 @@ const initPlugin = (config) => {
                     }
                 });
 
-                uploadField.removeEventListener('change', () => {});
+                uploadField.removeEventListener('change', () => { });
                 uploadField.addEventListener('change', () => {
                     const file = uploadField.files[0];
                     /* 2^10 = 1024,
-					   2^20 = 2^10 * 2^10 = ~1000 * ~1000 ~= 1.000.000*/
+                       2^20 = 2^10 * 2^10 = ~1000 * ~1000 ~= 1.000.000*/
                     const fileSize =
                         file.size / Math.pow(2, 20); /* Get file size in MB */
                     if (fileSize >= 0) {
