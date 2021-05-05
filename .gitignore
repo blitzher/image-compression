@@ -1,4 +1,4 @@
-product/mockup/node_modules/
+**/node_modules/
 product/mockup/uploads/
 other-files/dct/PNG_transparency_demonstration_1.png
 

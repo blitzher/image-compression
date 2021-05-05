@@ -3,9 +3,9 @@
  * @returns {number[]}
  */
 export const range = (a, b, c) =>
-	new Array(~~((!b ? a : b - a) / (c ?? 1) + 0.5))
+	new Array(~~((!b ? a : b - a) / (c || 1) + 0.5))
 		.fill()
-		.map((_, i) => i * (c ?? 1) + (!b ? 0 : a));
+		.map((_, i) => i * (c || 1) + (!b ? 0 : a));
 
 /**
  * Unflaten matrix.

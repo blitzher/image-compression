@@ -4,33 +4,58 @@
     <div id="modal" class="modal">
         <link rel="stylesheet" href="plugin/plugin.css" />
         <div class="modal__view">
-            <h1>
-                <slot name="title"></slot>
-            </h1>
+            <div class="top-row">
+                <!--<h4 class="modal__header">Compression settings</h4>-->
 
-            <p>Press 'Esc' to close...</p>
-            <div class="image-wrapper">
-            <div>
-                <!-- <input name="upfile" type="file" id="upfile" accept="image/*"/><br><br>-->
-                <img id="imagePreview" src="" alt="your image"/>
-            </div>
-            </div>
-        <div><br>
-            <label class="dropdown-text" for="compSelect">Select compression method:</label>
-            <select id="compSelect" name="compSelect" class="dropdown">
-                <div class="dropdown-options">
-                <option value="default">Default</option>
-                <option value="preset 1">Preset 1</option>
-                <option value="preset 2">Preset 2</option>
-                <option value="preset 3">Preset 3</option>
-                <option value="custom">Custom</option>
+                <div class="modal__preset">
+                    <label class="dropdown-text" for="compSelect">Preset:</label>
+                    <select id="compSelect" name="compSelect" class="dropdown">
+                        <option value="default">Default</option>
+                        <option value="grayscale">Grayscale</option>
+                        <option value="custom">Custom</option>
+                    </select>
                 </div>
-            </select>
 
-        </div>
-        <div>
-            <button id="compress" class="plugin-btn">Compress</button>
-            <button id="send-image" class="plugin-btn">Send</button>
+            </div>
+
+            <!-- <p>Press 'Esc' to close...</p> -->
+            <div class="modal__mid">
+                <div class="options-wrapper" id="optionsWrapper">
+                    <form>
+                        <label for="sub-sampling">Sub-sampling:</label>
+                        <ul name="sub-sampling">
+                            <li>
+                                <label for="color-sub-1">4:4:4</label>
+                                <input type="radio" name="color-sub-1" checked>
+                            </li>
+                            <li>
+                                <label for="color-sub-1">4:2:2</label>
+                                <input type="radio" name="color-sub-1">
+                            </li>
+                            <li>
+                                <label for="color-sub-1">4:1:1</label>
+                                <input type="radio" name="color-sub-1">
+                            </li>
+                        </ul>
+                            <label for="quality">Quality:</label>
+                            <input type="range" name="quality" id="" step="5" value="50%">
+
+                    </form>
+
+                </div>
+
+                <div class="image-wrapper">
+                    <canvas id="imagePreview"></canvas>
+                </div>
+
+            </div>
+
+        <div class="bot-row">
+            <span>
+                <button id="compress" class="plugin-btn">Compress</button>
+                <button id="send-image" class="plugin-btn">Send</button>
+            </span>
+
             <button class="plugin-btn" id="cancelModal" onclick="function closeModalWithin(toggleModal)">Cancel</button>
         </div>
     </div>
