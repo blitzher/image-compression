@@ -58,6 +58,7 @@ body {
     background: none;
     box-sizing: border-box;
     border-radius: 20px;
+    overflow-wrap: break-word;
 }
 ::-webkit-scrollbar {
     width: 5px;
