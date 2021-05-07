@@ -6,8 +6,8 @@
  * @param {number[][]} mtx Input 8x8 pixel block.
  * @returns {number[][]}
  */
-export const mdDct2 = (mtx) => {
-    const gpu = new GPU(); // New GPU.js instance for computations.
+export const mdDct2 = (mtx, GPU) => {
+    const gpu = GPU || new GPU(); // New GPU.js instance for computations.
 
     const cosines = gpu
         .createKernel(function () {
