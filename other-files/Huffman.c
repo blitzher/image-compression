@@ -6,8 +6,27 @@
 
 int main(void)
 {
-    char array[] = "aaawwqqqsscaaffaqzzjjjktpo";
-    huffman(array);
+    char string[] = "aaawwqqqsscaaffaqzzjjjktpo";
+    int stringLen = array_len(string), outputLength, *output, i;
+    HuffmanNode* tree;
+    printf("%d\n", array_len(string));
+    printf("%d\n", count_elements(string, 'a'));
+    printf("%s\n", unique_array(string));
+
+    printf("Generating tree...\n");
+    tree = GenerateHuffmanTree(string);
+    printf("Compressing string...\n");
+    output = CompressString(string, stringLen, tree, &outputLength);
+
+
+    printf("Compressed bitarray:\n");
+    for (i = 0; i < outputLength; i++)
+    {
+        printf("%d", TestBit(output, i));
+    }
+    
+
+
     return 0;
 }
 int array_len(char *string)
@@ -86,7 +105,7 @@ int ElemFreq_compare(const void *a, const void *b)
     return (elemB->freq - elemA->freq);
 }
 
-void huffman(char *string)
+HuffmanNode* GenerateHuffmanTree(char *string)
 {
     uint i;
     HuffmanNode *currentNode;
@@ -139,10 +158,6 @@ void huffman(char *string)
             }
         }
 
-/*         printf("__________________\n");
-        printf("i = %d, j = %d\n", i, j); */
-
-
         /* Move all elements which have lower frequency one space right */
         for (k = unique_len-1; k >= j; k--) {
             /* printf("k = %d ", k); */
@@ -153,37 +168,59 @@ void huffman(char *string)
 
         /* Insert the internal node into tree */
         tree[j] = internal;
-
-        /* 
-        DEBUGGING
-
-
-        printf("\n");
-        printf("i = %d\n", i);
-        print_ElemFreq(internal->elem);
-        printf("left:\n    ");
-        print_ElemFreq(internal->left->elem);
-        printf("right:\n    ");
-        print_ElemFreq(internal->right->elem);
-        printf("\n");
-
-         for (l = 0; l < i; l++)
-        {
-
-            currentNode = tree[l];
-
-            if (currentNode->elem.value > 0) {
-                print_ElemFreq(currentNode->elem); }
-            else
-                print_HuffmanTree(currentNode);
-        }
-        
-        getchar();
-        */
-
     }
-    print_HuffmanTree(tree[0]);
+
+    for (i = 0; i < unique_len; i++)
+    {
+        currentNode = tree[i];
+    }
+
+    return tree[0];
 }
+
+int _find_char_in_tree(char ch, HuffmanNode* node, int* out, int* depth) {
+    printf("ch: %c, d: %d, ", node->elem.value, *depth);
+    if (node->elem.value == ch) {
+        return 1;
+    }
+
+    else {
+        *depth = *depth + 1;
+        if (node->left->elem.value != 0 && _find_char_in_tree(ch, node->left, out, depth)) {
+            SetBit(out, *depth);
+            return 1;
+        }
+        else if (node->right->elem.value != 0 && _find_char_in_tree(ch, node->right, out, depth))
+        {
+            ClearBit(out, *depth);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int* CompressString(char* string, uint length, HuffmanNode* tree, int* outputLength) {
+    int depth, bits[1], i, j, cumDepth;
+    int* output = (int*)malloc(sizeof(int) * length);
+
+    for (i = 0; i < length; i++)
+    {
+        depth = 0;
+        printf("\tcompressing %c...", string[i]);
+        _find_char_in_tree(string[i], tree, bits, &depth);
+        printf("\tinserting %c into output...", string[i]);
+        for (j = 0; j < depth; j++)
+        {
+            TestBit(bits, j) ? SetBit(output, j+cumDepth) : ClearBit(output, j+cumDepth);
+        }
+        cumDepth += depth;        
+    }
+
+    *outputLength = cumDepth;
+    return output;
+}
+
+
 void print_ElemFreq(ElemFreq elem)
 {
     printf("[%c, %d]\n", elem.value, elem.freq);
@@ -205,15 +242,9 @@ void print_HuffmanTree_internal(HuffmanNode *root, uint prefixWidth) {
     
     if (right->elem.freq > 0)
         print_HuffmanTree_internal(root->right, prefixWidth + 1);
-
-
-
-
-
 }
 void print_HuffmanTree(HuffmanNode *root) {
     printf("%c|%2d\n", root->elem.value, root->elem.freq);
     print_HuffmanTree_internal(root->left, 1);
     print_HuffmanTree_internal(root->right, 1);
-
 }
