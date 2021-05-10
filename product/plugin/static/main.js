@@ -118,6 +118,8 @@ const initPlugin = (config) => {
 
                 const optionsWrapper = templateClone.querySelector('[class="options-wrapper"]');
 
+                let ctx = canvas.getContext("2d");
+
                 presetOptions.addEventListener('change', (ev) => {
                     let value = ev.target.value;
                     qualityConfig.preset = value;
@@ -126,15 +128,20 @@ const initPlugin = (config) => {
 
                     switch (qualityConfig.preset) {
                         case "grayscale":
-                            grayscale(canvas);
-                            optionsWrapper.style.width = 0;
+                            {
+                                ctx.drawImage(image, 0, 0);
+                                grayscale(canvas);
+                                optionsWrapper.style.width = 0;
+                            }
                             break;
                         case "custom":
-                            optionsWrapper.style.width = "100%";
+                            {
+                                ctx.drawImage(image, 0, 0);
+                                optionsWrapper.style.width = "100%";
+                            }
                             break;
                         default:
                             {
-                                let ctx = canvas.getContext("2d");
                                 ctx.drawImage(image, 0, 0);
                                 optionsWrapper.style.width = 0;
                             }
