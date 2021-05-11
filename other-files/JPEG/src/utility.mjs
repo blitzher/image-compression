@@ -1,3 +1,5 @@
+//import { GPU } from "gpu.js";
+
 /**
  * Python style range function.
  * @returns {number[]}
@@ -121,3 +123,35 @@ export const rle = (data) => {
 
     return out;
 };
+
+export const toComps = (mtx) => {
+    let out = range(Math.floor(mtx.length / 8)).map(()=> range(Math.floor(mtx[0].length / 8)));
+
+    for (let i = 0; i < out.length; i++) {
+        for (let j = 0; j < out[0].length; j++) {
+            let tmp = range(8).map(() => range(8));
+
+            for (let x = 0; x < 8; x++) {
+                for (let y = 0; y < 8; y++) {
+                    tmp[x][y] = mtx[x + i * 8][y + j * 8];
+                }
+            }
+
+            out[i][j] = tmp;
+        }
+    }
+
+    return out;
+}
+
+export const mtxApply = (mtx, fn) => mtx.map(x => x.map(y => fn(y)));
+
+
+export const gpuApply = (mtx, fn, gpu) => {
+    let out = gpu.createKernel(function (mtx) {
+        return fn(mtx[this.thread.x][this.thread.y]);
+    }).setOutput([mtx.length, mtx[0].length])
+        .setFunctions([fn]);
+
+    return out(mtx);
+}

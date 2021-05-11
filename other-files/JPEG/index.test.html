@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPEG Compression Tests</title>
+    <script src="./node_modules/gpu.js/dist/gpu-browser.min.js"></script>
+    <style>
+        #mycanvas {
+            width: 100%;
+            height: auto;
+            display: none;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/mocha/mocha.css" />
+    <script src="./src/lib.js"></script>
+    <script src="./src/jpeg.js"></script>
+    <script src="index.js"></script>
+    <link rel="preload" as="script" href="./src/main-worker.js">
+</head>
+<body>
+    <div id="mocha"></div>
+
+    <script src="https://unpkg.com/chai/chai.js"></script>
+    <script src="https://unpkg.com/mocha/mocha.js"></script>
+
+    <script class="mocha-init">
+      mocha.setup({
+          ui: 'bdd',
+          timeout: '30000'
+      });
+      mocha.checkLeaks();
+    </script>
+    <script>
+        describe('JPEG', () => {
+            it('Applies DCT-II to all blocks.', (done) => {
+                run('index.png').then((x) => {
+                    console.log(x)
+                    done();
+                });
+            });
+        });
+
+    </script>
+    <script class="mocha-exec">
+      mocha.run();
+    </script>
+</body>
+</html>

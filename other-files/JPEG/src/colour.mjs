@@ -1,4 +1,10 @@
-
+/**
+ *
+ * @param srcArr
+ * @param index
+ * @param GPU
+ * @returns
+ */
 export const getChannel = (srcArr, index, GPU) => {
     const gpu = GPU || new GPU();
     const channel = gpu.createKernel(function (arr, i) {
