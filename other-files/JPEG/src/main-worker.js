@@ -1,8 +1,10 @@
-importScripts('./lib.js', '../node_modules/gpu.js/dist/gpu-browser.min.js');
-onmessage = function (e) {
-    const gpu = new GPU();
+importScripts(
+    'https://unpkg.com/gpu.js@latest/dist/gpu-browser.min.js'
+);
 
-    const calcCosines = gpu
+onmessage = (e) => {
+    const gpu = new GPU(),
+        cosines = gpu
             .createKernel(function () {
                 let u = this.thread.x,
                     x = this.thread.y;
@@ -20,35 +22,31 @@ onmessage = function (e) {
                 }
 
                 return C(u) * cosine(x, u);
-            })
-        .setOutput([8, 8]);
+            }, {
+                output: [8, 8],
+                pipeline: true,
+            })(),
+        mapDct2 = gpu
+            .createKernel(function (arr, cosines) {
+                let localSum = 0.0;
 
-    const cosines = calcCosines();
+                for (let u = 0; u < 8; u++) {
+                    for (let v = 0; v < 8; v++) {
+                        localSum +=
+                            arr[this.thread.z][v][u] *
+                            cosines[u][this.thread.x] *
+                            cosines[v][this.thread.y];
+                    }
+                }
 
-
-    let dctRow = async (row) => {
-        let task = async (x) => {
-            let worker = new Worker('./jpeg-worker.js');
-
-            let res = new Promise((resolve, reject) => {
-                worker.onmessage = (ev) => {
-                    worker.terminate()
-                    resolve(ev.data)
-                };
-
-                worker.postMessage({ chunk: x, cosines });
+                return Math.round((1 / Math.sqrt(2 * 8)) * localSum) % 256;
+            }, {
+                output: [8, 8, e.data.length],
+                pipeline: true,
             });
 
-            return res;
-        };
+    postMessage(mapDct2(e.data, cosines));
 
-        return Promise.all(row.map(x => task(x)));
-    };
-
-    dctRow(e.data).then(y => {
-        postMessage(y);
-
-        gpu.destroy();
-        close();
-    });
+    gpu.destroy();
+    close();
 }
