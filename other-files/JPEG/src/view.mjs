@@ -48,28 +48,3 @@ export const drawImage = ({ img, gpu }) => {
 
     return render;
 };
-
-export const toComponents = ({ mtx, gpu }) => {
-    const components = gpu
-        .createKernel(function (a) {
-            let out = [
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-            ];
-
-            for (let i = 0; i < 8; i++) {
-                for (let j = 0 * 8; j < 8; j++) {
-                    out[i][j] = a[i + this.thread.x * 8][j + this.thread.y * 8];
-                }
-            }
-        })
-        .setOutput([Math.floor(mtx[0].length / 8), Math.floor(mtx.length / 8)]);
-
-    return components(mtx);
-};

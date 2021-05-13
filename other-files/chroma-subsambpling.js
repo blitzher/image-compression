@@ -26,7 +26,7 @@ for (let i = 0; i < 4; i++) {
 /**
  * Compute the chroma subsampling on an image, and
  * @param {ycbcr[][]} im The image to perform the chroma subsampling on
- * @param {number[]} meth The chroma subsampling method, eg. [4,4,4], [4,2,0] 
+ * @param {number[]} meth The chroma subsampling method, eg. [4,4,4], [4,2,0]
  * @returns {ycbcr[][]} A new image, on which the chroma subsampling has been performed */
 function chroma_subsampling(im, meth) {
 
@@ -96,6 +96,6 @@ function chroma_subsampling(im, meth) {
 console.log("PRE SUBSAMPLING")
 const ycbcr_img = img.map(row => row.map(px => ycbcr(px)));
 console.table(ycbcr_img);
-const output = chroma_subsampling(ycbcr_img, [4, 4, 4]);
+const output = chroma_subsampling(ycbcr_img, [4, 2, 2]);
 console.table(output)
 
