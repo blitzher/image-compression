@@ -33,4 +33,11 @@ for (i = 0; i < N; i++) {
     }
 }
 
-console.log(DCT);
+
+console.table(
+    DCT
+    .map(xs => xs
+        .map(x => x
+            .toString()
+            .padStart(3)))
+);

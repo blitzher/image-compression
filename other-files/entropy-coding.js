@@ -116,3 +116,4 @@ let rle = (data) => {
 };
 
 console.log(rle(refOut));
+console.log(refOut)
