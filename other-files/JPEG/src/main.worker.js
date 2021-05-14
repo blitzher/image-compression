@@ -3,7 +3,7 @@ importScripts(
 );
 
 onmessage = (e) => {
-    const range = (a, b, c) =>
+    let range = (a, b, c) =>
         new Array(~~((!b ? a : b - a) / (c || 1) + 0.5))
             .fill()
             .map((_, i) => i * (c || 1) + (!b ? 0 : a)),
@@ -28,7 +28,7 @@ onmessage = (e) => {
                 return C(u) * cosine(x, u);
             }, {
                 output: [8, 8],
-                pipeline: true,
+                //pipeline: true,
             })(),
         mapDct2 = gpu
             .createKernel(function (arr, cosines) {
@@ -46,14 +46,14 @@ onmessage = (e) => {
                 return Math.round((1 / Math.sqrt(2 * 8)) * localSum) % 256;
             }, {
                 output: [8, 8, e.data.length],
-                pipeline: true,
+                //pipeline: true,
             }),
         mapQuantise = gpu
             .createKernel(function (arr, table) {
                 return Math.round(arr[this.thread.z][this.thread.y][this.thread.x] / table[this.thread.y][this.thread.x]);
             }, {
                 output: [8, 8, e.data.length],
-                pipeline: true,
+                //pipeline: true,
             }),
         zigzag = [
             0, 0, 1, 0, 0, 1, 0, 2, 1, 1, 2, 0, 3, 0, 2, 1, //
@@ -83,6 +83,8 @@ onmessage = (e) => {
             return out;
         };
 
+    let test = [1, 2, 3]
+        test.map(x => x)
 
     let defaultTable = [
         [16, 11, 10, 16, 24, 40, 51, 61],
@@ -99,7 +101,13 @@ onmessage = (e) => {
         zzBlocks = qBlocks.map((block) => serialise(block, zigzag)),
         rleBlocks = zzBlocks.map((block) => rle(block).flat());
 
-    postMessage({ dctBlocks, qBlocks, zzBlocks, rleBlocks, srcBlocks: e.data });
+    postMessage({
+        dctBlocks,
+        qBlocks,
+        zzBlocks,
+        rleBlocks,
+        srcBlocks: e.data
+    });
 
     gpu.destroy();
     close();

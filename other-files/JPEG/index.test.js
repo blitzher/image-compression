@@ -22,25 +22,25 @@ describe('JPEG', () => {
 
     describe('Chroma subsampling', () => {
         it('Subsamples.', () => {
-            console.log(chromaSubsample(pxMtx, [4, 2, 2]))
+            //console.log(chromaSubsample(pxMtx, [4, 2, 2]))
 
-            console.log(pxMtx[0])
+            //console.log(pxMtx[0])
         });
     });
 
     describe('Encoder', () => {
         it('Applies DCT-II to all blocks.', (done) => {
             jpegEncode('./static/index.png').then((x) => {
-                // console.table(x[0].dctBlocks[0]);
-                // console.table(x[0].qBlocks[0]);
-                // console.log(x[0].zzBlocks[0])
-                // console.log(x[0].rleBlocks[0]);
+                //console.table(x[0].dctBlocks[0]);
+                //console.table(x[0].qBlocks[0]);
+                //console.log(x[0].zzBlocks[0])
+                //console.log(x[0].rleBlocks[0]);
 
-                console.table({
+                /*console.table({
                     "Source size": x[0].srcBlocks.flat(2).length,
                     "Output size": x[0].rleBlocks.flat().length,
                     "Ratio": (x[0].rleBlocks.flat().length / x[0].srcBlocks.flat(2).length * 100).toPrecision(5) + "%",
-                });
+                });*/
 
                 done();
             });
