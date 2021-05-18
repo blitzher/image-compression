@@ -1,3 +1,4 @@
+
 describe('JPEG', () => {
     let pxMtx;
 
@@ -30,7 +31,7 @@ describe('JPEG', () => {
 
     describe('Encoder', () => {
         it('Applies DCT-II to all blocks.', (done) => {
-            jpegEncode('./static/index.png').then((x) => {
+            jpegEncode('./static/Untitled.png').then((x) => {
                 //console.table(x[0].dctBlocks[0]);
                 //console.table(x[0].qBlocks[0]);
                 //console.log(x[0].zzBlocks[0])
@@ -45,5 +46,14 @@ describe('JPEG', () => {
                 done();
             });
         });
+    })
+
+    describe('Canvas', () => {
+        it('Draws JPEG result.', (done) => {
+            jpegEncode('./static/index.png').then(x => {
+                x.draw();
+                done();
+            });
+        })
     })
 });
