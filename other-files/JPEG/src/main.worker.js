@@ -28,7 +28,6 @@ onmessage = (e) => {
                 return C(u) * cosine(x, u);
             }, {
                 output: [8, 8],
-                //pipeline: true,
             })(),
         mapDct2 = gpu
             .createKernel(function (arr, cosines) {
@@ -46,14 +45,12 @@ onmessage = (e) => {
                 return Math.round((1 / Math.sqrt(2 * 8)) * localSum) % 256;
             }, {
                 output: [8, 8, e.data.length],
-                //pipeline: true,
             }),
         mapQuantise = gpu
             .createKernel(function (arr, table) {
                 return Math.round(arr[this.thread.z][this.thread.y][this.thread.x] / table[this.thread.y][this.thread.x]);
             }, {
                 output: [8, 8, e.data.length],
-                //pipeline: true,
             }),
         zigzag = [
             0, 0, 1, 0, 0, 1, 0, 2, 1, 1, 2, 0, 3, 0, 2, 1, //
@@ -83,9 +80,6 @@ onmessage = (e) => {
             return out;
         };
 
-    let test = [1, 2, 3]
-        test.map(x => x)
-
     let defaultTable = [
         [16, 11, 10, 16, 24, 40, 51, 61],
         [12, 12, 14, 19, 26, 58, 60, 55],
@@ -100,6 +94,8 @@ onmessage = (e) => {
         qBlocks = mapQuantise(dctBlocks, defaultTable),
         zzBlocks = qBlocks.map((block) => serialise(block, zigzag)),
         rleBlocks = zzBlocks.map((block) => rle(block).flat());
+
+    console.table(dctBlocks[0])
 
     postMessage({
         dctBlocks,
