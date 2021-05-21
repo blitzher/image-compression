@@ -21,9 +21,9 @@ describe("Grayscale compression", () => {
 			0,
 			canvas.width,
 			canvas.height,
-        );
+		);
 
-        let data = imageData.data
+		let data = imageData.data
 
 		for (let i = 0; i < data.length; i += 4) {
 			let avg =
@@ -31,31 +31,34 @@ describe("Grayscale compression", () => {
 
 			data[i] = avg * 2;
 			data[i + 1] = avg / 2;
-            data[i + 2] = avg / 3;
-            data[i + 3] = 255;
-        }
+			data[i + 2] = avg / 3;
+			data[i + 3] = 255;
+		}
 
-        let input = data.slice();
+		let input = data.slice();
 
-        ctx.putImageData(imageData, 0, 0);
+		ctx.putImageData(imageData, 0, 0);
 
-        for (let i = 0; i < data.length; i += 4) {
-			let avg = (data[i] + data[i+1] + data[i+2])/3;
+		for (let i = 0; i < data.length; i += 4) {
+			let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
 
 			data[i] = avg;
 			data[i + 1] = avg;
-            data[i + 2] = avg;
-            data[i + 3] = 255;
-        }
+			data[i + 2] = avg;
+			data[i + 3] = 255;
+		}
 
-        ctx.putImageData(imageData, 0, 0)
+		ctx.putImageData(imageData, 0, 0)
 
-        let output = data.slice();
+		let output = data.slice();
 
-        console.log(input);
+		console.log(input);
 		console.log(output);
 	})
 	it("should say ur mum my dog", () => {
 		console.log("ur mum my dog");
+
+		const square = (x) => x ** 2 + 1;
+		assertEqual(square(2), 4);
 	})
 })
