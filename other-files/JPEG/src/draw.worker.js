@@ -1,18 +1,16 @@
-importScripts(
-    'https://unpkg.com/gpu.js@latest/dist/gpu-browser.min.js'
-);
+importScripts('https://unpkg.com/gpu.js@latest/dist/gpu-browser.min.js');
 
 onmessage = (e) => {
     let range = (a, b, c) =>
-        new Array(~~((!b ? a : b - a) / (c || 1) + 0.5))
-            .fill()
-            .map((_, i) => i * (c || 1) + (!b ? 0 : a)),
+            new Array(~~((!b ? a : b - a) / (c || 1) + 0.5))
+                .fill()
+                .map((_, i) => i * (c || 1) + (!b ? 0 : a)),
         to2d = (arr, width) =>
-            range(arr.length / width)
-                .map((_, i) => range(width)
-                    .map((_, j) => arr[(i * width) + j])),
+            range(arr.length / width).map((_, i) =>
+                range(width).map((_, j) => arr[i * width + j]),
+            ),
         { blocks, w, h } = e.data,
-        gpu = new GPU();
+        gpu = new GPU({ mode: 'cpu' });
 
     const cosines = gpu
         .createKernel(function () {
@@ -28,7 +26,7 @@ onmessage = (e) => {
             }
 
             function cosine(x, u) {
-                return Math.cos(((2 * x + 1) / 16)  * u * Math.PI);
+                return Math.cos(((2 * x + 1) / 16) * u * Math.PI);
             }
 
             return C(u) * cosine(x, u);
@@ -48,34 +46,58 @@ onmessage = (e) => {
                 }
             }
 
-            return Math.round((arr[this.thread.z][0][0] + localSum) / Math.SQRT2 );
+            return Math.round(
+                (arr[this.thread.z][0][0] + localSum) / Math.SQRT2,
+            );
         })
         .setOutput([8, 8, blocks[0].dctBlocks.length])
         .setPrecision('single');
 
-    const toRgb = (data2D, size) => gpu
-        .createKernel(function (arr) {
-            let i = this.thread.x,
-                y = arr[i][0],
-                cb = arr[i][1],
-                cr = arr[i][2];
+    const toRgb = (data2D, size) =>
+        gpu.createKernel(
+            function (arr) {
+                let i = this.thread.x,
+                    y = arr[i][0],
+                    cb = arr[i][1],
+                    cr = arr[i][2];
 
-            return [
-                Math.min(Math.max(0, Math.round(y + 1.402 * (cr - 128))), 255),
-                Math.min(Math.max(0, Math.round(y - 0.3441 * (cb - 128) - 0.7141 * (cr - 128))), 255),
-                Math.min(Math.max(0, Math.round(y + 1.772 * (cb - 128))), 255),
-            ];
-        }, {
-            output: [size],
-            precision: 'single',
-        })(data2D);
+                return [
+                    Math.min(
+                        Math.max(0, Math.round(y + 1.402 * (cr - 128))),
+                        255,
+                    ),
+                    Math.min(
+                        Math.max(
+                            0,
+                            Math.round(
+                                y - 0.3441 * (cb - 128) - 0.7141 * (cr - 128),
+                            ),
+                        ),
+                        255,
+                    ),
+                    Math.min(
+                        Math.max(0, Math.round(y + 1.772 * (cb - 128))),
+                        255,
+                    ),
+                ];
+            },
+            {
+                output: [size],
+                precision: 'single',
+            },
+        )(data2D);
 
-    const mapUnQuantise = gpu
-        .createKernel(function (arr, table) {
-            return Math.round(arr[this.thread.z][this.thread.y][this.thread.x] * table[this.thread.y][this.thread.x]);
-        }, {
+    const mapUnQuantise = gpu.createKernel(
+        function (arr, table) {
+            return Math.round(
+                arr[this.thread.z][this.thread.y][this.thread.x] *
+                    table[this.thread.y][this.thread.x],
+            );
+        },
+        {
             output: [8, 8, blocks[0].dctBlocks.length],
-        });
+        },
+    );
 
     let defaultTable = [
         [16, 11, 10, 16, 24, 40, 51, 61],
@@ -88,9 +110,12 @@ onmessage = (e) => {
         [72, 92, 95, 98, 112, 100, 103, 99],
     ];
 
-    let [cY, cCb, cCr] = [0, 1, 2].map(i => to2d(mapDct3(blocks[i].dctBlocks, cosines), Math.floor(w / 8))),
-        [cYout, cCbout, cCrout] = [0, 1, 2].map(() => range(h - h % 8).map(() => range(w - w % 8)));
-
+    let [cY, cCb, cCr] = [0, 1, 2].map((i) =>
+            to2d(mapDct3(blocks[i].dctBlocks, cosines), Math.floor(w / 8)),
+        ),
+        [cYout, cCbout, cCrout] = [0, 1, 2].map(() =>
+            range(h - (h % 8)).map(() => range(w - (w % 8))),
+        );
 
     range(Math.floor(h / 8)).forEach((i) =>
         range(Math.floor(w / 8)).forEach((j) => {
@@ -99,32 +124,41 @@ onmessage = (e) => {
                     cYout[i * 8 + y][j * 8 + x] = cY[i][j][y][x];
                     cCbout[i * 8 + y][j * 8 + x] = cCb[i][j][y][x];
                     cCrout[i * 8 + y][j * 8 + x] = cCr[i][j][y][x];
-                }));
-        }));
+                }),
+            );
+        }),
+    );
 
+    let newSplice = gpu.createKernel(
+        function (a, b, c) {
+            let x = this.thread.x;
 
-    let newSplice = gpu.createKernel(function (a, b, c) {
-        let x = this.thread.x;
-
-        return [a[x], b[x], c[x]];
-    }, {
-        output: [w * h],
-    });
+            return [a[x], b[x], c[x]];
+        },
+        {
+            output: [w * h],
+        },
+    );
 
     console.table(cY[0][0]);
     //console.table()
 
-    let output = to2d(toRgb(newSplice(cYout.flat(), cCbout.flat(), cCrout.flat()), (w - w % 8) * (h - h % 8)), (w - w % 8));
+    let output = to2d(
+        toRgb(
+            newSplice(cYout.flat(), cCbout.flat(), cCrout.flat()),
+            (w - (w % 8)) * (h - (h % 8)),
+        ),
+        w - (w % 8),
+    );
 
     //console.table(blocks[0].srcBlocks[0]);
     console.table(blocks[0].dctBlocks[0]);
 
     postMessage({
         rgbArr: output,
-        cY
+        cY,
     });
-
 
     gpu.destroy();
     close();
-}
+};

@@ -6,7 +6,10 @@
 "html.format.indentInnerHtml": true,
 "html.format.wrapAttributesIndentSize": 22,
 "html.format.maxPreserveNewLines": 2,
-"prettier.configPath": "product\\.prettierrc.yaml",
+"prettier.configPath": ".prettierrc.yaml",
 "editor.detectIndentation": false,
-"editor.stickyTabStops": true
+"editor.stickyTabStops": true,
+"prettier.tabWidth": 4,
+"prettier.singleQuote": true,
+"prettier.trailingComma": "all"
 }
