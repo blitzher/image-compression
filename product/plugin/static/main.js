@@ -126,7 +126,18 @@ const initPlugin = (config) => {
                     console.log(qualityConfig.preset);
                     ev.preventDefault();
 
+                    //let fileUrl = window.URL.createObjectURL(uploadField.files[0]);
+
                     switch (qualityConfig.preset) {
+                        /*case "default":
+                            {
+                                ctx.drawImage(image, 0, 0);
+                                encodeJpeg(fileUrl).then(x => {
+                                    decodeJpeg(x, fileUrl);
+                                });
+                                optionsWrapper.style.width = 0;
+                            }
+                            break;*/
                         case "grayscale":
                             {
                                 ctx.drawImage(image, 0, 0);
