@@ -1,6 +1,8 @@
 :host {
     color: white;
     background: grey;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
 }
 
 :host h4 {
@@ -110,8 +112,6 @@
     transition: ease-in-out 0.2s;
     -moz-transition: ease-in-out 0.2s;
 }
-
-
 
 .dropdown {
     background-color: #282a36;

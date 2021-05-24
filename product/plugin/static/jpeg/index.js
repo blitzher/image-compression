@@ -370,6 +370,33 @@ const upscaleComps = (comps, [J, a, b]) => {
     return [OutYMat, OutCbMat, OutCrMat];
 };
 
+const upscale2 = ([Y, Cb, Cr], [J, a, b]) => {
+    let out = [Y, [], []];
+
+    for (let i = 0; i < Y.length; i += 2) {
+        let tmp = [];
+
+        for (let j = 0; j < Y[0].length; j += 2) {
+            tmp.push(Cb[i]);
+        }
+    }
+
+    out[1] = range(b).map((row) =>
+        row.flatMap((v) => new Array((Y.length / 4) * b).fill(v)),
+    );
+    out[2] = Cr.map((row) =>
+        row.flatMap((v) => new Array((Y.length / 4) * b).fill(v)),
+    );
+
+    return out;
+};
+
+const sampleUp = ([Y, Cb, Cr], [J, a, b]) => [
+    Y,
+    Cb.map((x, i) => x.flatMap((v) => new Array(4 / a).fill(v))),
+    Cr.map((x, i) => x.flatMap((v) => new Array(4 / a).fill(v))),
+];
+
 const quantise = (mcu, table, factor, gpu) =>
     (gpu || new GPU({ mode: 'cpu' })).createKernel(
         function (mcu, table, quality) {
@@ -541,9 +568,9 @@ const fromRgb = (data, n) => {
     return out;
 };
 
-let encodeJpeg = (srcUri, qualityLuma, qualityChroma, sampleRate) =>
+const encodeJpeg = (srcUri, qualityLuma, qualityChroma, sampleRate, _worker) =>
     new Promise((resolve) => {
-        const worker = new Worker('plugin/jpeg/src/jpeg.worker.js'),
+        const worker = _worker || new Worker('plugin/jpeg/src/jpeg.worker.js'),
             gpu = new GPU();
 
         let img = new Image(),
@@ -598,6 +625,7 @@ let encodeJpeg = (srcUri, qualityLuma, qualityChroma, sampleRate) =>
                     chromaTable,
                     qualityChroma,
                     qualityLuma,
+                    sampleRate,
                 });
             };
 
@@ -641,7 +669,8 @@ const decodeJpeg = (encoded, canvas) => {
             graphical: true,
         },
     );
-    let decodedComps = [
+
+    let [Y, Cb, Cr] = [
             to2d(
                 fromDctMap(
                     deQuantiseMap(
@@ -676,18 +705,32 @@ const decodeJpeg = (encoded, canvas) => {
                 encoded.width / 8,
             ),
         ],
-        composed = decodedComps.map((c) =>
-            mcuMtxToPxMtx(c, encoded.width, encoded.height).flat(),
-        ),
+        composed = [
+            mcuMtxToPxMtx(Y, encoded.width, encoded.height).flat(),
+            mcuMtxToPxMtx(Cb, encoded.width, encoded.height).flat(),
+            mcuMtxToPxMtx(Cr, encoded.width, encoded.height).flat(),
+        ],
         spliced = splice(composed, encoded.width, encoded.height, cpu);
 
-    //let drawable = to2d(spliced, encoded.width);
-    let drawable2 = to2d(
+    let drawable = to2d(
         to2d(fromYuv(spliced.map((x) => Array.from(x)).flat(), 3), 3),
         encoded.width,
     );
 
-    render(drawable2);
+    console.log(encoded.sampleRate);
+
+    render(drawable);
+};
+
+let jpeg = () => {
+    const worker = new Worker('plugin/jpeg/src/jpeg.worker.js');
+
+    return {
+        encode: (src, qualityLuma, qualityChroma, sampleRate) =>
+            encodeJpeg(src, qualityLuma, qualityChroma, sampleRate, worker),
+        decode: decodeJpeg,
+        close: () => worker.terminate(),
+    };
 };
 
 /**

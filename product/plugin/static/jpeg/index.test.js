@@ -336,7 +336,8 @@ describe('JPEG methods', () => {
             let downscaled = sample([comp, comp, comp], [4, 2, 1]);
 
             console.table(downscaled[2]);
-            let upscaled = upscaleComps(downscaled, [4, 2, 1]);
+            console.table(sampleUp(downscaled)[2]);
+            let upscaled = upscaleComps(downscaled, [4, 2, 2]);
 
             /* test downscaling */
             chai.assert.strictEqual(downscaled[0].length, comp.length);

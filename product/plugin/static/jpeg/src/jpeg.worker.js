@@ -16,7 +16,10 @@ onmessage = (ev) => {
 
     let yuv = fromRgb(pxs, 4),
         allChannels = getAllChannels(yuv, 4).map((c) => to2d(c, imgWidth)),
-        [cY, cCb, cCr] = sample(allChannels, sampleRate),
+        [cY, cCb, cCr] = upscaleComps(
+            sample(allChannels, sampleRate),
+            sampleRate,
+        ),
         encodedComps = [
             quantiseMap(
                 toDctMap(toBlocks(cY).flat(), cpu),

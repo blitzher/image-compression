@@ -105,9 +105,54 @@ const initPlugin = (config) => {
 
                 let payload = {};
 
+                let transcoder = jpeg();
+
+                let customSetting = templateClone
+                    .getElementById('custom-preset-settings')
+                    .querySelectorAll('[type="radio"]');
+
+                console.log(customSetting[0].value);
+
+                let qualitySettings = {
+                    sampling: [4, 4, 4],
+                    qualityLuma: 100,
+                    qualityChroma: 100,
+                };
+
+                customSetting[0].addEventListener('checked', () => {
+                    qualitySettings.sampling = [4, 4, 4];
+                    transcoder
+                        .encode(fileUrl, 100, 100, [4, 4, 4])
+                        .then((x) => {
+                            transcoder.decode(x, canvas);
+                            console.log("Done! Preset: 'default'");
+                        });
+                });
+
+                customSetting[1].addEventListener('checked', () => {
+                    qualitySettings.sampling = [4, 2, 2];
+                    transcoder
+                        .encode(fileUrl, 100, 100, [4, 2, 2])
+                        .then((x) => {
+                            transcoder.decode(x, canvas);
+                            console.log("Done! Preset: 'default'");
+                        });
+                });
+
+                customSetting[2].addEventListener('checked', () => {
+                    qualitySettings.sampling = [4, 2, 1];
+                    transcoder
+                        .encode(fileUrl, 100, 100, [4, 2, 1])
+                        .then((x) => {
+                            transcoder.decode(x, canvas);
+                            console.log("Done! Preset: 'default'");
+                        });
+                });
+
                 sendBtn.addEventListener('click', () => {
                     config.onSend(payload);
 
+                    transcoder.close();
                     toggleModal();
                 });
 
@@ -137,45 +182,56 @@ const initPlugin = (config) => {
                     switch (qualityConfig.preset) {
                         case 'high':
                             {
-                                encodeJpeg(fileUrl, 75, 50, [4, 4, 4]).then(
-                                    (x) => {
-                                        decodeJpeg(x, canvas);
+                                transcoder
+                                    .encode(fileUrl, 100, 50, [4, 4, 4])
+                                    .then((x) => {
+                                        transcoder.decode(x, canvas);
                                         console.log("Done! Preset: 'high'");
-                                    },
-                                );
+                                    });
                                 optionsWrapper.style.width = 0;
                             }
                             break;
                         case 'medium':
                             {
-                                encodeJpeg(fileUrl, 40, 15, [4, 4, 4]).then(
-                                    (x) => {
-                                        decodeJpeg(x, canvas);
+                                transcoder
+                                    .encode(fileUrl, 100, 100, [4, 2, 2])
+                                    .then((x) => {
+                                        transcoder.decode(x, canvas);
                                         console.log("Done! Preset: 'medium'");
-                                    },
-                                );
+                                    });
                                 optionsWrapper.style.width = 0;
                             }
                             break;
                         case 'low':
                             {
-                                encodeJpeg(fileUrl, 25, 10, [4, 4, 4]).then(
-                                    (x) => {
-                                        decodeJpeg(x, canvas);
+                                transcoder
+                                    .encode(fileUrl, 50, 25, [4, 2, 0])
+                                    .then((x) => {
+                                        transcoder.decode(x, canvas);
                                         console.log("Done! Preset: 'low'");
-                                    },
-                                );
+                                    });
                                 optionsWrapper.style.width = 0;
+                            }
+                            break;
+                        case 'custom':
+                            {
+                                transcoder
+                                    .encode(fileUrl, 10, 10, [4, 4, 1])
+                                    .then((x) => {
+                                        transcoder.decode(x, canvas);
+                                        console.log("Done! Preset: 'custom'");
+                                    });
+                                optionsWrapper.style.width = '100%';
                             }
                             break;
                         default:
                             {
-                                encodeJpeg(fileUrl, 100, 100, [4, 4, 4]).then(
-                                    (x) => {
-                                        decodeJpeg(x, canvas);
+                                transcoder
+                                    .encode(fileUrl, 100, 100, [4, 2, 0])
+                                    .then((x) => {
+                                        transcoder.decode(x, canvas);
                                         console.log("Done! Preset: 'default'");
-                                    },
-                                );
+                                    });
                                 optionsWrapper.style.width = 0;
                             }
                             break;
@@ -200,13 +256,13 @@ const initPlugin = (config) => {
                             canvas.width = image.width;
                             canvas.height = image.height;
 
-                            encodeJpeg(fileUrl, 100, 100, [4, 4, 4]).then(
-                                (x) => {
-                                    decodeJpeg(x, canvas);
+                            transcoder
+                                .encode(fileUrl, 100, 100, [4, 2, 1])
+                                .then((x) => {
+                                    transcoder.decode(x, canvas);
 
                                     payload = x;
-                                },
-                            );
+                                });
                             optionsWrapper.style.width = 0;
                         };
 
