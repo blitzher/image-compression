@@ -6,11 +6,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Not Messenger</title>
         <script>
-            const $ = (id) => document.getElementById(id);
+            const $ = (id) => { return document.getElementById(id) };
         </script>
         <link rel="stylesheet" href="./css/style.css" />
 
         <!-- Plugin from "remote" source -->
+        <script src="https://unpkg.com/gpu.js@latest/dist/gpu-browser.min.js"></script>
+        <script src="/plugin/jpeg/index.js"></script>
         <script src="/plugin/main.js"></script>
         <script>
             initPlugin({

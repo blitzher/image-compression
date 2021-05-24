@@ -462,9 +462,9 @@ const fromRgb = (data, n) => {
     return out;
 }
 
-let encodeJpeg = (srcUri, qualityLuma, qualityChroma) => new Promise((resolve) =>{
-    const gpu = new GPU(),
-        cpu = new GPU({ mode: 'cpu' });
+let encodeJpeg = (srcUri, qualityLuma, qualityChroma) => new Promise((resolve) => {
+    const worker = new Worker('plugin/jpeg/src/jpeg.worker.js'),
+        gpu = new GPU();
 
     let img = new Image(),
         chromaTable = [
@@ -488,15 +488,12 @@ let encodeJpeg = (srcUri, qualityLuma, qualityChroma) => new Promise((resolve) =
             [72, 92, 95, 98, 112, 100, 103, 99],
         ];
 
-
-        img.onload = () => {
-            let initWidth = img.width,
-                initHeight = img.height,
-                imgWidth = initWidth - (initWidth % 8),
-                imgHeight = initHeight - (initHeight % 8);
-
-
-            let render = gpu.createKernel(
+    img.onload = () => {
+        let initWidth = img.width,
+            initHeight = img.height,
+            imgWidth = initWidth - (initWidth % 8),
+            imgHeight = initHeight - (initHeight % 8),
+            render = gpu.createKernel(
                 function (image) {
                     let px = image[this.thread.y][this.thread.x];
 
@@ -508,32 +505,37 @@ let encodeJpeg = (srcUri, qualityLuma, qualityChroma) => new Promise((resolve) =
                 },
             );
 
-            render(img);
-
-            let yuv = fromRgb(render.getPixels(), 4),
-                allChannels = getAllChannels(yuv, 4).map((c) => to2d(c, imgWidth)),
-                encodedComps = [
-                    quantiseMap(toDctMap(toBlocks(allChannels[0]).flat()), lumaTable, qualityLuma, cpu),
-                    quantiseMap(toDctMap(toBlocks(allChannels[1]).flat()), chromaTable, qualityChroma, cpu),
-                    quantiseMap(toDctMap(toBlocks(allChannels[2]).flat()), chromaTable, qualityChroma, cpu),
-                ];
+        worker.onmessage = (ev) => {
 
             resolve({
                 components: {
-                    Y: encodedComps[0],
-                    Cb: encodedComps[1],
-                    Cr: encodedComps[2],
+                    Y: ev.data.encodedComps[0],
+                    Cb: ev.data.encodedComps[1],
+                    Cr: ev.data.encodedComps[2],
                 },
                 width: imgWidth,
                 height: imgHeight,
                 lumaTable,
                 chromaTable,
                 qualityChroma,
-                qualityLuma
-            })
-        };
+                qualityLuma,
+            });
+        }
 
-        img.src = srcUri;
+        render(img);
+
+        worker.postMessage({
+            imgWidth,
+            imgHeight,
+            lumaTable,
+            chromaTable,
+            qualityChroma,
+            qualityLuma,
+            pxs: render.getPixels()
+        })
+    };
+
+    img.src = srcUri;
 });
 
 const decodeJpeg = (encoded, canvas) => {
@@ -610,7 +612,7 @@ const JPEG = async ({ srcUri, gpu, cpu, canvas }) => {
         ];
 
     let encode = () => {
-        encodeJpeg(srcUri, 50, 25).then(encoded => {
+        encodeJpeg(srcUri, 100, 20).then(encoded => {
             decodeJpeg(encoded, canvas)
         });
     };

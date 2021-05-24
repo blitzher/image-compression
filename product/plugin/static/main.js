@@ -118,7 +118,7 @@ const initPlugin = (config) => {
 
                 const optionsWrapper = templateClone.querySelector('[class="options-wrapper"]');
 
-                let ctx = canvas.getContext("2d");
+                //let ctx = canvas.getContext("2d");
 
                 presetOptions.addEventListener('change', (ev) => {
                     let value = ev.target.value;
@@ -126,19 +126,20 @@ const initPlugin = (config) => {
                     console.log(qualityConfig.preset);
                     ev.preventDefault();
 
-                    //let fileUrl = window.URL.createObjectURL(uploadField.files[0]);
+                    let fileUrl = window.URL.createObjectURL(uploadField.files[0]);
 
                     switch (qualityConfig.preset) {
-                        /*case "default":
+                        case "default":
                             {
-                                ctx.drawImage(image, 0, 0);
-                                encodeJpeg(fileUrl).then(x => {
-                                    decodeJpeg(x, fileUrl);
+                                //ctx.drawImage(image, 0, 0);
+                                encodeJpeg(fileUrl, 2, 50).then(x => {
+                                    decodeJpeg(x, canvas);
+                                    console.log(x)
                                 });
                                 optionsWrapper.style.width = 0;
                             }
-                            break;*/
-                        case "grayscale":
+                            break;
+                        /*case "grayscale":
                             {
                                 ctx.drawImage(image, 0, 0);
                                 grayscale(canvas);
@@ -156,7 +157,7 @@ const initPlugin = (config) => {
                                 ctx.drawImage(image, 0, 0);
                                 optionsWrapper.style.width = 0;
                             }
-                            break;
+                            break;*/
                     }
                 });
 
@@ -170,12 +171,27 @@ const initPlugin = (config) => {
                     if (fileSize >= 0) {
                         toggleModal();
 
-                        const ctx = canvas.getContext('2d');
+                        //const ctx = canvas.getContext('2d');
+                        const gpu = new GPU({ canvas });
 
                         image.onload = () => {
                             canvas.width = image.width;
                             canvas.height = image.height;
-                            ctx.drawImage(image, 0, 0);
+
+                            let render = gpu.createKernel(
+                                function (img) {
+                                    let px = img[this.thread.y][this.thread.x];
+
+                                    this.color(px[0], px[1], px[2]);
+                                },
+                                {
+                                    output: [image.width, image.height],
+                                    graphical: true
+                                }
+                            );
+
+
+                            render(image);
                         };
 
                         image.crossOrigin = 'anonymous';
