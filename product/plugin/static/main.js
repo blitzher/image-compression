@@ -82,7 +82,7 @@ const initPlugin = (config) => {
                     } else {
                         shadowRoot.appendChild(modal);
                         shadowRoot.querySelector('#modal').focus();
-                        applyCustomStyle(shadowRoot, config);
+                        applyCustomStyle(shadowRoot, config.style);
                     }
                 };
 
@@ -108,6 +108,15 @@ const initPlugin = (config) => {
                 //     'imagePreview',
                 // );
                 const canvas = templateClone.getElementById('imagePreview');
+                const sendBtn = templateClone.getElementById('send-image');
+
+                let payload = {};
+
+                sendBtn.addEventListener('click', () => {
+                    config.onSend(payload);
+
+                    toggleModal();
+                })
 
                 let presetOptions = templateClone.getElementById('compSelect');
                 const qualityConfig = {
@@ -120,6 +129,8 @@ const initPlugin = (config) => {
 
                 //let ctx = canvas.getContext("2d");
 
+
+
                 presetOptions.addEventListener('change', (ev) => {
                     let value = ev.target.value;
                     qualityConfig.preset = value;
@@ -129,41 +140,57 @@ const initPlugin = (config) => {
                     let fileUrl = window.URL.createObjectURL(uploadField.files[0]);
 
                     switch (qualityConfig.preset) {
-                        case "default":
+                        case "high":
                             {
-                                //ctx.drawImage(image, 0, 0);
-                                encodeJpeg(fileUrl, 2, 50).then(x => {
+
+                                encodeJpeg(fileUrl, 50, 50).then(x => {
                                     decodeJpeg(x, canvas);
-                                    console.log(x)
+                                    console.log("Done! Preset: 'high'");
                                 });
                                 optionsWrapper.style.width = 0;
+
                             }
                             break;
-                        /*case "grayscale":
+                        case "medium":
                             {
-                                ctx.drawImage(image, 0, 0);
-                                grayscale(canvas);
+
+                                encodeJpeg(fileUrl, 50, 10).then(x => {
+                                    decodeJpeg(x, canvas);
+                                    console.log("Done! Preset: 'medium'");
+                                });
                                 optionsWrapper.style.width = 0;
+
                             }
                             break;
-                        case "custom":
+                        case "low":
                             {
-                                ctx.drawImage(image, 0, 0);
-                                optionsWrapper.style.width = "100%";
+
+                                encodeJpeg(fileUrl, 25, 10).then(x => {
+                                    decodeJpeg(x, canvas);
+                                    console.log("Done! Preset: 'low'");
+                                });
+                                optionsWrapper.style.width = 0;
+
                             }
                             break;
                         default:
                             {
-                                ctx.drawImage(image, 0, 0);
+
+                                encodeJpeg(fileUrl, 2, 50).then(x => {
+                                    decodeJpeg(x, canvas);
+                                    console.log("Done! Preset: 'default'");
+                                });
                                 optionsWrapper.style.width = 0;
+
                             }
-                            break;*/
+                            break;
                     }
                 });
 
                 uploadField.removeEventListener('change', () => { });
                 uploadField.addEventListener('change', () => {
                     const file = uploadField.files[0];
+                    let fileUrl = window.URL.createObjectURL(file);
                     /* 2^10 = 1024,
                        2^20 = 2^10 * 2^10 = ~1000 * ~1000 ~= 1.000.000*/
                     const fileSize =
@@ -178,20 +205,14 @@ const initPlugin = (config) => {
                             canvas.width = image.width;
                             canvas.height = image.height;
 
-                            let render = gpu.createKernel(
-                                function (img) {
-                                    let px = img[this.thread.y][this.thread.x];
 
-                                    this.color(px[0], px[1], px[2]);
-                                },
-                                {
-                                    output: [image.width, image.height],
-                                    graphical: true
-                                }
-                            );
+                            encodeJpeg(fileUrl, 2, 50).then(x => {
+                                decodeJpeg(x, canvas);
 
+                                payload = x;
 
-                            render(image);
+                            });
+                            optionsWrapper.style.width = 0;
                         };
 
                         image.crossOrigin = 'anonymous';
