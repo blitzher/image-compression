@@ -2,11 +2,18 @@
 
 //const gpu = new GPU({ mode: 'cpu' }); // Global instance of GPU.JS.
 
-/**
- * DC coefficient.
- * @param {number} i Index, either u or v.
- * @returns {number} 1 / sqrt(2) when i == 0 else 1.
- */
+const cosines = (gpu) =>
+    (gpu || new GPU({ mode: 'cpu' })).createKernel(
+        function () {
+            let { x, y } = this.thread;
+
+            Math.cos(((2 * x + 1) * y * Math.PI) / 16);
+        },
+        {
+            output: [8, 8],
+            precision: 'single',
+        },
+    );
 
 //const C = [1 / Math.SQRT2, 1, 1, 1, 1, 1, 1, 1];
 
@@ -51,6 +58,8 @@ const toDctMap = (mcuArr, gpu) =>
                 for (let y = 0; y < 8; y++) {
                     sum +=
                         arr[this.thread.z][y][x] *
+                        // cosines[x][u] *
+                        // cosines[y][v];
                         Math.cos(((2 * x + 1) * u * Math.PI) / 16) *
                         Math.cos(((2 * y + 1) * v * Math.PI) / 16);
                 }
@@ -258,22 +267,107 @@ const mcuMtxToPxMtx = (mcuMtx, w, h) => {
 
 /**
  * Supsample chrominance component.
- * @param {number[][][]} comp Color component matrix.
+ * @param {number[][][]} comps Color component matrix.
+ *
+ * Is up of arrays of matrices, existing
+ * `[ [[Y]], [[Cb]], [[CR]] ]`
  * @param {number[]} rate e.g. [4,4,4] or [4,2,2].
  */
 const sample = (comps, rate) => {
+    console.log('COMPS');
+    console.log(comps);
+    console.log('-------------');
     let V = [1, rate[1], 1];
 
-    let x = [0, 1, 2].map((i) => Math.ceil(comps[i][0].length * (rate[i] / 4))),
-        y = [0, 1, 2].map((i) => Math.ceil(comps[i].length * (V[i] / 2)));
+    /* hack */
+    rate = rate.map((v) => (v === 0 ? 0.1 : v));
 
-    let out = comps.map((i) =>
-        range(0, y[i], V[i]).map((j) =>
-            range(0, x[i], V[i]).map((k) => comps[i][j][k]),
-        ),
-    );
+    let YMat = comps[0];
+    let CbMat = comps[1];
+    let CrMat = comps[2];
 
-    return out;
+    /* Setup subsampling spaces */
+    let luma_sz = Math.floor(4 / rate[0]);
+    let chr1_sz = Math.floor(4 / rate[1]);
+    let chr2_sz = Math.floor(4 / rate[2]);
+
+    /* Keep all luminance data of Y matrix */
+    let OutYMat = YMat;
+
+    /* Calculate and append rows to OutCbMat and OutCrMat, depending on chr1_sz */
+    let OutCbMat = [];
+    let OutCrMat = [];
+    for (let i = 0; i < CbMat.length; i++) {
+        /* All even rows */
+        if (i % 2 === 0) {
+            let CbRow = CbMat[i].filter(
+                (_, i) => i % chr1_sz === 0 && chr1_sz < 5,
+            );
+            let CrRow = CrMat[i].filter(
+                (_, i) => i % chr1_sz === 0 && chr1_sz < 5,
+            );
+
+            if (CbRow.length) OutCbMat.push(CbRow);
+            if (CrRow.length) OutCrMat.push(CrRow);
+        } else {
+            /* All odd rows */
+            let CbRow = CbMat[i].filter(
+                (_, i) => i % chr2_sz === 0 && chr2_sz < 5,
+            );
+            let CrRow = CrMat[i].filter(
+                (_, i) => i % chr2_sz === 0 && chr2_sz < 5,
+            );
+            if (CbRow.length) OutCbMat.push(CbRow);
+            if (CrRow.length) OutCrMat.push(CrRow);
+        }
+    }
+
+    /* Return the same type as input */
+    return [OutYMat, OutCbMat, OutCrMat];
+};
+
+const upscaleComps = (comps, [J, a, b]) => {
+    a = Math.floor(4 / a);
+    if (b != 0) b = Math.floor(4 / b);
+
+    function upscaleMatByFactor(mat, hor, ver) {
+        let out = [];
+        let rows = [];
+        for (let i of range(mat.length)) {
+            let row = [];
+            for (let j of range(mat[i].length)) {
+                for (let _ of range(hor)) row.push(mat[i][j]);
+            }
+
+            rows.push(row);
+        }
+        for (let i of range(rows.length)) {
+            for (let _ of range(ver)) {
+                out.push(rows[i]);
+            }
+        }
+        return out;
+    }
+
+    let OutYMat = comps[0];
+    let OutCbMat = [];
+    let OutCrMat = [];
+
+    if (b === 0) {
+        OutCbMat = upscaleMatByFactor(comps[1], a, 2);
+        OutCrMat = upscaleMatByFactor(comps[2], a, 2);
+    } else {
+        for (let i of range(comps[1].length)) {
+            OutCbMat.push(
+                upscaleMatByFactor([comps[1][i]], i % 2 ? b : a, 1).flat(),
+            );
+            OutCrMat.push(
+                upscaleMatByFactor([comps[2][i]], i % 2 ? b : a, 1).flat(),
+            );
+        }
+    }
+
+    return [OutYMat, OutCbMat, OutCrMat];
 };
 
 const quantise = (mcu, table, factor, gpu) =>
@@ -318,12 +412,12 @@ const quantiseMap = (mcuArr, table, quality, gpu) =>
         {
             output: [8, 8, mcuArr.length],
             precision: 'single',
-            returnType: 'Integer'
-        }
+            returnType: 'Integer',
+        },
     )(mcuArr, table, quality);
 
 const deQuantiseMap = (mcuArr, table, quality, gpu) =>
-        (gpu || new GPU({ mode: 'cpu' })).createKernel(
+    (gpu || new GPU({ mode: 'cpu' })).createKernel(
         function (mcu, table, quality) {
             let { x, y, z } = this.thread,
                 scaleFactor = 0;
@@ -341,8 +435,8 @@ const deQuantiseMap = (mcuArr, table, quality, gpu) =>
         {
             output: [8, 8, mcuArr.length],
             precision: 'single',
-            returnType: 'Integer'
-        }
+            returnType: 'Integer',
+        },
     )(mcuArr, table, quality);
 
 const levelShift = (mcuArr) =>
@@ -389,35 +483,25 @@ const fromYuv = (data, n) => {
             cr = data[i + 2];
 
         out.push(
-            Math.min(
-                Math.max(0, Math.round(y + 1.402 * (cr - 128))),
-                255,
-            )
+            Math.min(Math.max(0, Math.round(y + 1.402 * (cr - 128))), 255),
         );
         out.push(
             Math.min(
                 Math.max(
                     0,
-                    Math.round(
-                        y -
-                        0.3441 * (cb - 128) -
-                        0.7141 * (cr - 128),
-                    ),
+                    Math.round(y - 0.3441 * (cb - 128) - 0.7141 * (cr - 128)),
                 ),
                 255,
-            )
+            ),
         );
         out.push(
-            Math.min(
-                Math.max(0, Math.round(y + 1.772 * (cb - 128))),
-                255,
-            )
+            Math.min(Math.max(0, Math.round(y + 1.772 * (cb - 128))), 255),
         );
         if (n === 4) out.push(255);
     }
 
     return out;
-}
+};
 
 const fromRgb = (data, n) => {
     let out = [];
@@ -429,114 +513,110 @@ const fromRgb = (data, n) => {
 
         out.push(
             Math.min(
-                Math.max(
-                    0,
-                    Math.round(0.299 * r + 0.587 * g + 0.114 * b),
-                ),
+                Math.max(0, Math.round(0.299 * r + 0.587 * g + 0.114 * b)),
                 255,
-            )
+            ),
         );
         out.push(
             Math.min(
                 Math.max(
                     0,
-                    Math.round(
-                        -0.1687 * r - 0.3313 * g + 0.5 * b + 128,
-                    ),
+                    Math.round(-0.1687 * r - 0.3313 * g + 0.5 * b + 128),
                 ),
                 255,
-            ));
+            ),
+        );
         out.push(
             Math.min(
                 Math.max(
                     0,
-                    Math.round(
-                        0.5 * r - 0.4187 * g - 0.0813 * b + 128,
-                    ),
+                    Math.round(0.5 * r - 0.4187 * g - 0.0813 * b + 128),
                 ),
                 255,
-                ));
+            ),
+        );
         if (n === 4) out.push(255);
     }
 
     return out;
-}
+};
 
-let encodeJpeg = (srcUri, qualityLuma, qualityChroma) => new Promise((resolve) => {
-    const worker = new Worker('plugin/jpeg/src/jpeg.worker.js'),
-        gpu = new GPU();
+let encodeJpeg = (srcUri, qualityLuma, qualityChroma, sampleRate) =>
+    new Promise((resolve) => {
+        const worker = new Worker('plugin/jpeg/src/jpeg.worker.js'),
+            gpu = new GPU();
 
-    let img = new Image(),
-        chromaTable = [
-            [17, 18, 24, 47, 99, 99, 99, 99],
-            [18, 21, 26, 66, 99, 99, 99, 99],
-            [24, 26, 56, 99, 99, 99, 99, 99],
-            [47, 66, 99, 99, 99, 99, 99, 99],
-            [99, 99, 99, 99, 99, 99, 99, 99],
-            [99, 99, 99, 99, 99, 99, 99, 99],
-            [99, 99, 99, 99, 99, 99, 99, 99],
-            [99, 99, 99, 99, 99, 99, 99, 99],
-        ],
-        lumaTable = [
-            [16, 11, 10, 16, 24, 40, 51, 61],
-            [12, 12, 14, 19, 26, 58, 60, 55],
-            [14, 13, 16, 24, 40, 57, 69, 56],
-            [14, 17, 22, 29, 51, 87, 80, 62],
-            [18, 22, 37, 56, 68, 109, 103, 77],
-            [24, 35, 55, 64, 81, 104, 113, 92],
-            [49, 64, 78, 87, 103, 121, 120, 101],
-            [72, 92, 95, 98, 112, 100, 103, 99],
-        ];
+        let img = new Image(),
+            chromaTable = [
+                [17, 18, 24, 47, 99, 99, 99, 99],
+                [18, 21, 26, 66, 99, 99, 99, 99],
+                [24, 26, 56, 99, 99, 99, 99, 99],
+                [47, 66, 99, 99, 99, 99, 99, 99],
+                [99, 99, 99, 99, 99, 99, 99, 99],
+                [99, 99, 99, 99, 99, 99, 99, 99],
+                [99, 99, 99, 99, 99, 99, 99, 99],
+                [99, 99, 99, 99, 99, 99, 99, 99],
+            ],
+            lumaTable = [
+                [16, 11, 10, 16, 24, 40, 51, 61],
+                [12, 12, 14, 19, 26, 58, 60, 55],
+                [14, 13, 16, 24, 40, 57, 69, 56],
+                [14, 17, 22, 29, 51, 87, 80, 62],
+                [18, 22, 37, 56, 68, 109, 103, 77],
+                [24, 35, 55, 64, 81, 104, 113, 92],
+                [49, 64, 78, 87, 103, 121, 120, 101],
+                [72, 92, 95, 98, 112, 100, 103, 99],
+            ];
 
-    img.onload = () => {
-        let initWidth = img.width,
-            initHeight = img.height,
-            imgWidth = initWidth - (initWidth % 8),
-            imgHeight = initHeight - (initHeight % 8),
-            render = gpu.createKernel(
-                function (image) {
-                    let px = image[this.thread.y][this.thread.x];
+        img.onload = () => {
+            let initWidth = img.width,
+                initHeight = img.height,
+                imgWidth = initWidth - (initWidth % 8),
+                imgHeight = initHeight - (initHeight % 8),
+                render = gpu.createKernel(
+                    function (image) {
+                        let px = image[this.thread.y][this.thread.x];
 
-                    this.color(px[0], px[1], px[2]);
-                },
-                {
-                    output: [imgWidth, imgHeight],
-                    graphical: true,
-                },
-            );
+                        this.color(px[0], px[1], px[2]);
+                    },
+                    {
+                        output: [imgWidth, imgHeight],
+                        graphical: true,
+                    },
+                );
 
-        worker.onmessage = (ev) => {
+            worker.onmessage = (ev) => {
+                resolve({
+                    components: {
+                        Y: ev.data.encodedComps[0],
+                        Cb: ev.data.encodedComps[1],
+                        Cr: ev.data.encodedComps[2],
+                    },
+                    width: imgWidth,
+                    height: imgHeight,
+                    lumaTable,
+                    chromaTable,
+                    qualityChroma,
+                    qualityLuma,
+                });
+            };
 
-            resolve({
-                components: {
-                    Y: ev.data.encodedComps[0],
-                    Cb: ev.data.encodedComps[1],
-                    Cr: ev.data.encodedComps[2],
-                },
-                width: imgWidth,
-                height: imgHeight,
+            render(img);
+
+            worker.postMessage({
+                imgWidth,
+                imgHeight,
                 lumaTable,
                 chromaTable,
                 qualityChroma,
                 qualityLuma,
+                sampleRate,
+                pxs: render.getPixels(),
             });
-        }
+        };
 
-        render(img);
-
-        worker.postMessage({
-            imgWidth,
-            imgHeight,
-            lumaTable,
-            chromaTable,
-            qualityChroma,
-            qualityLuma,
-            pxs: render.getPixels()
-        })
-    };
-
-    img.src = srcUri;
-});
+        img.src = srcUri;
+    });
 
 const decodeJpeg = (encoded, canvas) => {
     const gpu = new GPU({ canvas }),
@@ -562,16 +642,50 @@ const decodeJpeg = (encoded, canvas) => {
         },
     );
     let decodedComps = [
-        to2d(fromDctMap(deQuantiseMap(encoded.components.Y, encoded.lumaTable, encoded.qualityLuma, cpu)), encoded.width / 8),
-        to2d(fromDctMap(deQuantiseMap(encoded.components.Cb, encoded.chromaTable, encoded.qualityChroma, cpu)), encoded.width / 8),
-        to2d(fromDctMap(deQuantiseMap(encoded.components.Cr, encoded.chromaTable, encoded.qualityChroma, cpu)), encoded.width / 8),
-    ],
-        composed = decodedComps.map((c) => mcuMtxToPxMtx(c, encoded.width, encoded.height).flat()),
+            to2d(
+                fromDctMap(
+                    deQuantiseMap(
+                        encoded.components.Y,
+                        encoded.lumaTable,
+                        encoded.qualityLuma,
+                        cpu,
+                    ),
+                ),
+                encoded.width / 8,
+            ),
+            to2d(
+                fromDctMap(
+                    deQuantiseMap(
+                        encoded.components.Cb,
+                        encoded.chromaTable,
+                        encoded.qualityChroma,
+                        cpu,
+                    ),
+                ),
+                encoded.width / 8,
+            ),
+            to2d(
+                fromDctMap(
+                    deQuantiseMap(
+                        encoded.components.Cr,
+                        encoded.chromaTable,
+                        encoded.qualityChroma,
+                        cpu,
+                    ),
+                ),
+                encoded.width / 8,
+            ),
+        ],
+        composed = decodedComps.map((c) =>
+            mcuMtxToPxMtx(c, encoded.width, encoded.height).flat(),
+        ),
         spliced = splice(composed, encoded.width, encoded.height, cpu);
 
     //let drawable = to2d(spliced, encoded.width);
-    let drawable2 = to2d(to2d(fromYuv(spliced.map(x => Array.from(x)).flat(), 3), 3), encoded.width);
-
+    let drawable2 = to2d(
+        to2d(fromYuv(spliced.map((x) => Array.from(x)).flat(), 3), 3),
+        encoded.width,
+    );
 
     render(drawable2);
 };
@@ -612,13 +726,12 @@ const JPEG = async ({ srcUri, gpu, cpu, canvas }) => {
         ];
 
     let encode = () => {
-        encodeJpeg(srcUri, 100, 20).then(encoded => {
-            decodeJpeg(encoded, canvas)
+        encodeJpeg(srcUri, 100, 20).then((encoded) => {
+            decodeJpeg(encoded, canvas);
         });
     };
 
-    encode()
-
+    encode();
 
     return {
         toDct: (mcu) => toDct(mcu, _cpu),
@@ -628,12 +741,12 @@ const JPEG = async ({ srcUri, gpu, cpu, canvas }) => {
         toDctMap: (mcuArr) => toDctMap(mcuArr, _cpu),
         fromDctMap: (mcuArr) => fromDctMap(mcuArr, _gpu),
         sample,
+        upscaleComps,
         imgWidth: img.width,
         imgHeight: img.height,
         chromaQuantise: (mcu, factor) =>
             quantise(mcu, chromaTable, factor, _gpu),
-        lumaQuantise: (mcu, factor) =>
-            quantise(mcu, lumaTable, factor, _gpu),
+        lumaQuantise: (mcu, factor) => quantise(mcu, lumaTable, factor, _gpu),
     };
 };
 

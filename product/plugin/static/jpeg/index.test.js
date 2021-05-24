@@ -318,25 +318,40 @@ describe('JPEG methods', () => {
         });
     });
 
-    /* describe('.sample(component, rate)', () => {
-        //jpeg.then(console.log);
-        //let pxMtx = await jpeg.pixels.then((pxs) => to2d(pxs, jpeg.imgWidth));
+    describe('.sample(component, rate)', () => {
+        let comp = [
+            [140, 144, 147, 140, 140, 155, 179, 175],
+            [144, 152, 140, 147, 140, 148, 167, 179],
+            [152, 155, 136, 167, 163, 162, 152, 172],
+            [168, 145, 156, 160, 152, 155, 136, 160],
+            [162, 148, 156, 148, 140, 136, 147, 162],
+            [147, 167, 140, 155, 155, 140, 136, 162],
+            [136, 156, 123, 167, 162, 144, 140, 147],
+            [148, 155, 136, 155, 152, 147, 147, 136],
+        ];
 
-        //let refComp = pxMtx.map((x) => x.map((y) => y[1]));
+        it('should scale down a matrix when 4:2:0', () => {});
 
-        it('Correctly applies chroma-subsampling.', (done) => {
-            jpeg.pixels.then((pxs) => {
-                let comps = [0, 1, 2].map((_, i) =>
-                    to2d(getChannel(pxs, i), jpeg.imgWidth),
-                );
+        it('should scale up a matrix to 4:4:4, when prev downscaled', () => {
+            let downscaled = sample([comp, comp, comp], [4, 2, 1]);
 
-                console.table(comps[1]);
-                console.table(jpeg.sample(comps, [4, 2, 1]));
+            console.table(downscaled[2]);
+            let upscaled = upscaleComps(downscaled, [4, 2, 1]);
 
-                done();
-            });
+            /* test downscaling */
+            chai.assert.strictEqual(downscaled[0].length, comp.length);
+            chai.assert.strictEqual(downscaled[1][0].length, comp.length / 2);
+            chai.assert.strictEqual(
+                downscaled[1][0].length,
+                comp[0].length / 2,
+            );
+
+            console.table(upscaled[2]);
+            console.log(comp[0]);
+            chai.assert.strictEqual(upscaled[1].length, comp.length);
+            chai.assert.strictEqual(upscaled[1][0].length, comp.length);
         });
-    }); */
+    });
 
     describe('.quantise(mcu)', () => {
         let testMcu = [
@@ -350,8 +365,6 @@ describe('JPEG methods', () => {
             [148, 155, 136, 155, 152, 147, 147, 136],
         ];
 
-        it('Correctly scales MCU', () => {
-            //console.table(jpeg.chromaQuantise(testMcu, 75));
-        });
+        it('Correctly scales MCU');
     });
 });

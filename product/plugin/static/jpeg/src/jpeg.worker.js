@@ -4,15 +4,39 @@ onmessage = (ev) => {
     const gpu = new GPU(),
         cpu = new GPU({ mode: 'cpu' });
 
-    let { lumaTable, chromaTable, imgWidth, pxs, qualityChroma, qualityLuma } = ev.data;
+    let {
+        lumaTable,
+        chromaTable,
+        imgWidth,
+        pxs,
+        qualityChroma,
+        qualityLuma,
+        sampleRate,
+    } = ev.data;
 
     let yuv = fromRgb(pxs, 4),
         allChannels = getAllChannels(yuv, 4).map((c) => to2d(c, imgWidth)),
+        [cY, cCb, cCr] = sample(allChannels, sampleRate),
         encodedComps = [
-            quantiseMap(toDctMap(toBlocks(allChannels[0]).flat(), cpu), lumaTable, qualityLuma, gpu),
-            quantiseMap(toDctMap(toBlocks(allChannels[1]).flat(), cpu), chromaTable, qualityChroma, gpu),
-            quantiseMap(toDctMap(toBlocks(allChannels[2]).flat(), cpu), chromaTable, qualityChroma, gpu),
+            quantiseMap(
+                toDctMap(toBlocks(cY).flat(), cpu),
+                lumaTable,
+                qualityLuma,
+                gpu,
+            ),
+            quantiseMap(
+                toDctMap(toBlocks(cCb).flat(), cpu),
+                chromaTable,
+                qualityChroma,
+                gpu,
+            ),
+            quantiseMap(
+                toDctMap(toBlocks(cCr).flat(), cpu),
+                chromaTable,
+                qualityChroma,
+                gpu,
+            ),
         ];
 
-    postMessage({encodedComps});
-}
+    postMessage({ encodedComps });
+};
