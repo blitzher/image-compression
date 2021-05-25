@@ -26,13 +26,6 @@ const initPlugin = (config) => {
             constructor() {
                 super();
 
-                function jss(root) {
-                    root.querySelector('#modal div').style.backgroundColor =
-                        'lightblue';
-
-                    root.querySelector('.image-wrapper').style.backgroundColor =
-                        'green';
-                }
 
                 function applyCustomStyle(root, customStyleObject) {
                     const selectors = Object.keys(customStyleObject);
@@ -48,12 +41,6 @@ const initPlugin = (config) => {
                             formattedStyle;
                     }
                 }
-
-                let obj = {
-                    a: 2,
-                    b: 7,
-                    c: -23,
-                };
 
                 const shadowRoot = this.attachShadow({ mode: 'open' });
 
@@ -107,15 +94,10 @@ const initPlugin = (config) => {
 
                 let transcoder = jpeg();
 
-                let customSetting = templateClone
+                let samplingModePickers = templateClone
                     .getElementById('custom-preset-settings')
                     .querySelectorAll('[type="radio"]');
 
-                let qualitySettings = {
-                    sampling: [4, 4, 4],
-                    qualityLuma: 100,
-                    qualityChroma: 100,
-                };
 
                 sendBtn.addEventListener('click', () => {
                     config.onSend(payload);
@@ -141,8 +123,8 @@ const initPlugin = (config) => {
                 const compressBtn = templateClone.getElementById('compress');
                 compressBtn.addEventListener('click', (ev) => {
                     let selectedSampling;
-                    customSetting.forEach((b, i) => { if (b.checked) selectedSampling = i });
-                    const sampling = [[4, 4, 1], [4, 2, 2], [4, 1, 1]][selectedSampling];
+                    samplingModePickers.forEach((b, i) => { if (b.checked) selectedSampling = i });
+                    const sampling = [[4, 4, 4], [4, 2, 2], [4, 1, 1]][selectedSampling];
                     const lum_qual = Number.parseInt(lum_slider.value)
                     const chrom_qual = Number.parseInt(chrom_slider.value)
 
