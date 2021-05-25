@@ -89,7 +89,7 @@ const initPlugin = (config) => {
                         toggleModal();
                     }
 
-                    document.removeEventListener('keydown', () => {});
+                    document.removeEventListener('keydown', () => { });
                 });
 
                 templateClone
@@ -111,43 +111,11 @@ const initPlugin = (config) => {
                     .getElementById('custom-preset-settings')
                     .querySelectorAll('[type="radio"]');
 
-                console.log(customSetting[0].value);
-
                 let qualitySettings = {
                     sampling: [4, 4, 4],
                     qualityLuma: 100,
                     qualityChroma: 100,
                 };
-
-                customSetting[0].addEventListener('checked', () => {
-                    qualitySettings.sampling = [4, 4, 4];
-                    transcoder
-                        .encode(fileUrl, 100, 100, [4, 4, 4])
-                        .then((x) => {
-                            transcoder.decode(x, canvas);
-                            console.log("Done! Preset: 'default'");
-                        });
-                });
-
-                customSetting[1].addEventListener('checked', () => {
-                    qualitySettings.sampling = [4, 2, 2];
-                    transcoder
-                        .encode(fileUrl, 100, 100, [4, 2, 2])
-                        .then((x) => {
-                            transcoder.decode(x, canvas);
-                            console.log("Done! Preset: 'default'");
-                        });
-                });
-
-                customSetting[2].addEventListener('checked', () => {
-                    qualitySettings.sampling = [4, 2, 1];
-                    transcoder
-                        .encode(fileUrl, 100, 100, [4, 2, 1])
-                        .then((x) => {
-                            transcoder.decode(x, canvas);
-                            console.log("Done! Preset: 'default'");
-                        });
-                });
 
                 sendBtn.addEventListener('click', () => {
                     config.onSend(payload);
@@ -168,6 +136,23 @@ const initPlugin = (config) => {
                 );
 
                 //let ctx = canvas.getContext("2d");
+                const lum_slider = templateClone.getElementById("lum-qual");
+                const chrom_slider = templateClone.getElementById("chrom-qual");
+                const compressBtn = templateClone.getElementById('compress');
+                compressBtn.addEventListener('click', (ev) => {
+                    let selectedSampling;
+                    customSetting.forEach((b, i) => { if (b.checked) selectedSampling = i });
+                    const sampling = [[4, 4, 1], [4, 2, 2], [4, 1, 1]][selectedSampling];
+                    const lum_qual = Number.parseInt(lum_slider.value)
+                    const chrom_qual = Number.parseInt(chrom_slider.value)
+
+                    let qual_set = [
+                        lum_qual,
+                        chrom_qual,
+                        sampling,]
+
+                    encodeAndDisplay(qual_set, "custom");
+                });
 
                 presetOptions.addEventListener('change', (ev) => {
                     let value = ev.target.value;
@@ -175,70 +160,64 @@ const initPlugin = (config) => {
                     console.log(qualityConfig.preset);
                     ev.preventDefault();
 
-                    let fileUrl = window.URL.createObjectURL(
-                        uploadField.files[0],
-                    );
 
+
+
+                    let encode_form, name;
                     switch (qualityConfig.preset) {
                         case 'high':
                             {
-                                transcoder
-                                    .encode(fileUrl, 100, 50, [4, 4, 4])
-                                    .then((x) => {
-                                        transcoder.decode(x, canvas);
-                                        console.log("Done! Preset: 'high'");
-                                    });
+                                encode_form = [100, 50, [4, 4, 4]];
+                                name = 'default';
                                 optionsWrapper.style.width = 0;
                             }
                             break;
                         case 'medium':
                             {
-                                transcoder
-                                    .encode(fileUrl, 100, 100, [4, 2, 2])
-                                    .then((x) => {
-                                        transcoder.decode(x, canvas);
-                                        console.log("Done! Preset: 'medium'");
-                                    });
+                                encode_form = [100, 100, [4, 2, 2]];
+                                name = 'default';
                                 optionsWrapper.style.width = 0;
                             }
                             break;
                         case 'low':
                             {
-                                transcoder
-                                    .encode(fileUrl, 50, 25, [4, 2, 0])
-                                    .then((x) => {
-                                        transcoder.decode(x, canvas);
-                                        console.log("Done! Preset: 'low'");
-                                    });
+
+                                encode_form = [50, 25, [4, 2, 0]];
+                                name = 'low';
                                 optionsWrapper.style.width = 0;
                             }
                             break;
                         case 'custom':
                             {
-                                transcoder
-                                    .encode(fileUrl, 10, 10, [4, 4, 1])
-                                    .then((x) => {
-                                        transcoder.decode(x, canvas);
-                                        console.log("Done! Preset: 'custom'");
-                                    });
+
                                 optionsWrapper.style.width = '100%';
+                                encode_form = [10, 10, [4, 4, 1]];
+                                name = 'custom';
                             }
                             break;
                         default:
                             {
-                                transcoder
-                                    .encode(fileUrl, 100, 100, [4, 2, 0])
-                                    .then((x) => {
-                                        transcoder.decode(x, canvas);
-                                        console.log("Done! Preset: 'default'");
-                                    });
                                 optionsWrapper.style.width = 0;
+                                encode_form = [100, 100, [4, 2, 0]];
+                                name = 'default';
                             }
                             break;
                     }
+                    encodeAndDisplay(encode_form, name)
                 });
 
-                uploadField.removeEventListener('change', () => {});
+                function encodeAndDisplay(settings, name) {
+                    let fileUrl = window.URL.createObjectURL(
+                        uploadField.files[0],
+                    );
+                    transcoder.encode(fileUrl, ...settings).then(enc => {
+                        console.log(`Done! Preset: ${name}`);
+                        transcoder.decode(enc, canvas);
+
+                    })
+                }
+
+                uploadField.removeEventListener('change', () => { });
                 uploadField.addEventListener('change', () => {
                     const file = uploadField.files[0];
                     let fileUrl = window.URL.createObjectURL(file);
