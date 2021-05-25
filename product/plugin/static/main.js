@@ -81,7 +81,7 @@ const initPlugin = (config) => {
 
 
                 let presetOptionsElem = plugin.getElementById('compSelect');
-                let customSettingsElem = plugin
+                let samplingModePickers = plugin
                     .getElementById('custom-preset-settings')
                     .querySelectorAll('[type="radio"]');
 
@@ -106,7 +106,7 @@ const initPlugin = (config) => {
 
                 compressBtn.addEventListener('click', (ev) => {
                     let selectedSampling;
-                    customSettingsElem.forEach((b, i) => { if (b.checked) selectedSampling = i });
+                    samplingModePickers.forEach((b, i) => { if (b.checked) selectedSampling = i });
                     const
                         sampling = [[4, 4, 4], [4, 2, 2], [4, 1, 1]][selectedSampling],
                         lum_qual = Number.parseInt(lum_slider.value),
