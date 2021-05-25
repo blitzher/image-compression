@@ -189,37 +189,48 @@ const idctControlImpl = (mcu) => {
     return out;
 };
 
-const readFile = (uri, canvas) => {
-    let img = new Image(),
-        _canvas = canvas || document.createElement('canvas'),
-        ctx = _canvas.getContext('2d');
 
-    return new Promise((resolve) => {
-        img.onload = () => {
-            _canvas.width = img.width;
-            _canvas.height = img.height;
-
-            ctx.drawImage(img, 0, 0);
-
-            let imgData = ctx.getImageData(0, 0, img.width, img.height);
-
-            resolve(imgData.data);
-        };
-
-        img.crossOrigin = 'anonymous';
-        img.src = uri;
-    });
-};
-
+/**
+ * Python style range function.
+ * @param {number} a Length
+ * @returns
+ *//**
+ * Python style range function.
+ * @param {number} a Start
+ * @param {number} b End
+ * @param {number} c Step
+ * @returns
+ */
 const range = (a, b, c) =>
     new Array(~~((!b ? a : b - a) / (c || 1) + 0.5))
         .fill()
         .map((_, i) => i * (c || 1) + (!b ? 0 : a));
 
+/**
+ * Get colour component of image data.
+ * @param {Array} data
+ * @param {number} offset
+ * @param {number} N
+ * @returns
+ */
 const getChannel = (data, offset, N) =>
     range(data.length / N).map((i) => data[i + offset]);
 
-const toBlocks = (mtx) => {
+/**
+ * Get all colour components of image data.
+ * @param {Array} data Input data.
+ * @param {number} n Number of channels/components.
+ * @returns {Array[]} [number[], ..., number[]]
+ */
+const getAllChannels = (data, n) =>
+    range(n).map((i) => range(0, data.length, n).map((j) => data[j + i]));
+
+/**
+ * Convert matrix to matrix of 8x8 MCU blocks.
+ * @param {number[][]} mtx
+ * @returns
+ */
+const toMcuBlocks = (mtx) => {
     let out = range(Math.floor(mtx.length / 8)).map(() =>
         range(Math.floor(mtx[0].length / 8)),
     );
@@ -241,26 +252,52 @@ const toBlocks = (mtx) => {
     return out;
 };
 
+/**
+ * Convert array to 2D by row width.
+ * @param {Array} arr Array to transform.
+ * @param {number} width Row width.
+ * @returns
+ */
 const to2d = (arr, width) =>
     range(arr.length / width).map((_, i) =>
         range(width).map((_, j) => arr[i * width + j]),
     );
 
-const getAllChannels = (data, n) =>
-    range(n).map((i) => range(0, data.length, n).map((j) => data[j + i]));
 
-const mcuMtxToPxMtx = (mcuMtx, w, h) => {
+/**
+ * Flatten matrix of MCU blocks to image 2D component.
+ * @param {Array} mcuMtx
+ * @param {number} w
+ * @param {number} h
+ * @returns
+ */
+const flatMcuMtx = (mcuMtx, w, h) => {
     let out = range(h).map(() => range(w));
 
-    for (let i = 0; i < h / 8; i++) {
-        for (let j = 0; j < w / 8; j++) {
-            for (let x = 0; x < 8; x++) {
-                for (let y = 0; y < 8; y++) {
+    for (let i = 0; i < h / 8; i++)
+        for (let j = 0; j < w / 8; j++)
+            for (let x = 0; x < 8; x++)
+                for (let y = 0; y < 8; y++)
                     out[i * 8 + x][j * 8 + y] = mcuMtx[i][j][x][y];
-                }
-            }
+
+    return out;
+};
+
+let rle = (data) => {
+    let out = [
+            /* [curr, count] */
+        ],
+        iter = -1;
+
+    data.forEach((x) => {
+        if (typeof out[iter] != 'undefined' && x === out[iter][0]) {
+            out[iter][1]++;
+        } else {
+            iter++;
+            out.push([x, 1]);
+            out[iter][1]++;
         }
-    }
+    });
 
     return out;
 };
@@ -274,65 +311,57 @@ const mcuMtxToPxMtx = (mcuMtx, w, h) => {
  * @param {number[]} rate e.g. [4,4,4] or [4,2,2].
  */
 const sample = (comps, rate) => {
-    console.log('COMPS');
-    console.log(comps);
-    console.log('-------------');
-    let V = [1, rate[1], 1];
-
     /* hack */
     rate = rate.map((v) => (v === 0 ? 0.1 : v));
 
-    let YMat = comps[0];
-    let CbMat = comps[1];
-    let CrMat = comps[2];
+    let [YMat, CbMat, CrMat] = comps;
 
     /* Setup subsampling spaces */
-    let luma_sz = Math.floor(4 / rate[0]);
-    let chr1_sz = Math.floor(4 / rate[1]);
-    let chr2_sz = Math.floor(4 / rate[2]);
-
-    /* Keep all luminance data of Y matrix */
-    let OutYMat = YMat;
+    let // luma_sz = Math.floor(4 / rate[0]),
+        chr1Sz = Math.floor(4 / rate[1]),
+        chr2Sz = Math.floor(4 / rate[2]);
 
     /* Calculate and append rows to OutCbMat and OutCrMat, depending on chr1_sz */
-    let OutCbMat = [];
-    let OutCrMat = [];
+    let outCbMat = [],
+        outCrMat = [];
+
     for (let i = 0; i < CbMat.length; i++) {
         /* All even rows */
         if (i % 2 === 0) {
             let CbRow = CbMat[i].filter(
-                (_, i) => i % chr1_sz === 0 && chr1_sz < 5,
+                (_, i) => i % chr1Sz === 0 && chr1Sz < 5,
             );
             let CrRow = CrMat[i].filter(
-                (_, i) => i % chr1_sz === 0 && chr1_sz < 5,
+                (_, i) => i % chr1Sz === 0 && chr1Sz < 5,
             );
 
-            if (CbRow.length) OutCbMat.push(CbRow);
-            if (CrRow.length) OutCrMat.push(CrRow);
+            if (CbRow.length) outCbMat.push(CbRow);
+            if (CrRow.length) outCrMat.push(CrRow);
         } else {
             /* All odd rows */
             let CbRow = CbMat[i].filter(
-                (_, i) => i % chr2_sz === 0 && chr2_sz < 5,
+                (_, i) => i % chr2Sz === 0 && chr2Sz < 5,
             );
             let CrRow = CrMat[i].filter(
-                (_, i) => i % chr2_sz === 0 && chr2_sz < 5,
+                (_, i) => i % chr2Sz === 0 && chr2Sz < 5,
             );
-            if (CbRow.length) OutCbMat.push(CbRow);
-            if (CrRow.length) OutCrMat.push(CrRow);
+            if (CbRow.length) outCbMat.push(CbRow);
+            if (CrRow.length) outCrMat.push(CrRow);
         }
     }
 
     /* Return the same type as input */
-    return [OutYMat, OutCbMat, OutCrMat];
+    return [YMat, outCbMat, outCrMat];
 };
 
-const upscaleComps = (comps, [J, a, b]) => {
+const upscaleComps = (comps, [_, a, b]) => {
     a = Math.floor(4 / a);
     if (b != 0) b = Math.floor(4 / b);
 
     function upscaleMatByFactor(mat, hor, ver) {
-        let out = [];
-        let rows = [];
+        let out = [],
+            rows = [];
+
         for (let i of range(mat.length)) {
             let row = [];
             for (let j of range(mat[i].length)) {
@@ -349,9 +378,9 @@ const upscaleComps = (comps, [J, a, b]) => {
         return out;
     }
 
-    let OutYMat = comps[0];
-    let OutCbMat = [];
-    let OutCrMat = [];
+    let OutYMat = comps[0],
+        OutCbMat = [],
+        OutCrMat = [];
 
     if (b === 0) {
         OutCbMat = upscaleMatByFactor(comps[1], a, 2);
@@ -487,7 +516,7 @@ const drawComponents = ([C0, C1, C2], gpu) => {
     return render.getPixels();
 };
 
-let splice = ([a, b, c], w, h, gpu) =>
+const splice = ([a, b, c], w, h, gpu) =>
     (gpu || new GPU()).createKernel(
         function (a, b, c) {
             let x = this.thread.x;
@@ -499,7 +528,7 @@ let splice = ([a, b, c], w, h, gpu) =>
         },
     )(a, b, c);
 
-let crop = (mtx, w, h) => mtx.slice(0, h).map((r) => r.slice(0, w));
+const crop = (mtx, w, h) => mtx.slice(0, h).map((r) => r.slice(0, w));
 
 const fromYuv = (data, n) => {
     let out = [];
@@ -570,11 +599,13 @@ const fromRgb = (data, n) => {
 
 const encodeJpeg = (srcUri, qualityLuma, qualityChroma, sampleRate, _worker) =>
     new Promise((resolve) => {
-        const worker = _worker || new Worker('plugin/jpeg/src/jpeg.worker.js'),
-            gpu = new GPU();
+        const
+            worker = _worker || new Worker('plugin/jpeg/src/jpeg.worker.js'),
+            gpu = new GPU(),
+            img = new Image();
 
-        let img = new Image(),
-            chromaTable = [
+        // Quantisation tables as provided by the JPEG specification.
+        let chromaTable = [
                 [17, 18, 24, 47, 99, 99, 99, 99],
                 [18, 21, 26, 66, 99, 99, 99, 99],
                 [24, 26, 56, 99, 99, 99, 99, 99],
@@ -599,18 +630,20 @@ const encodeJpeg = (srcUri, qualityLuma, qualityChroma, sampleRate, _worker) =>
             let initWidth = img.width,
                 initHeight = img.height,
                 imgWidth = initWidth - (initWidth % 8),
-                imgHeight = initHeight - (initHeight % 8),
-                render = gpu.createKernel(
-                    function (image) {
-                        let px = image[this.thread.y][this.thread.x];
+                imgHeight = initHeight - (initHeight % 8);
 
-                        this.color(px[0], px[1], px[2]);
-                    },
-                    {
-                        output: [imgWidth, imgHeight],
-                        graphical: true,
-                    },
-                );
+            // Render function to get pixel values from HTML Image object.
+            const render = gpu.createKernel(
+                function (image) {
+                    let px = image[this.thread.y][this.thread.x];
+
+                    this.color(px[0], px[1], px[2]);
+                },
+                {
+                    output: [imgWidth, imgHeight],
+                    graphical: true,
+                },
+            );
 
             worker.onmessage = (ev) => {
                 resolve({
@@ -629,7 +662,7 @@ const encodeJpeg = (srcUri, qualityLuma, qualityChroma, sampleRate, _worker) =>
                 });
             };
 
-            render(img);
+            render(img); // Render image before exstracting pixels.
 
             worker.postMessage({
                 imgWidth,
@@ -639,18 +672,19 @@ const encodeJpeg = (srcUri, qualityLuma, qualityChroma, sampleRate, _worker) =>
                 qualityChroma,
                 qualityLuma,
                 sampleRate,
-                pxs: render.getPixels(),
+                pxs: render.getPixels(), // Extracted pixels.
             });
         };
 
         img.src = srcUri;
     });
 
-const decodeJpeg = (encoded, canvas) => {
-    const gpu = new GPU({ canvas }),
+const decodeJpeg = (encoded, canvas, context) => {
+    const
+        gpu = new GPU({ canvas }),
         cpu = new GPU({ mode: 'cpu' });
 
-    let render = gpu.createKernel(
+    const render = gpu.createKernel(
         function (pxMtx) {
             let { x, y } = this.thread,
                 N = this.constants.N;
@@ -706,9 +740,9 @@ const decodeJpeg = (encoded, canvas) => {
             ),
         ],
         composed = [
-            mcuMtxToPxMtx(Y, encoded.width, encoded.height).flat(),
-            mcuMtxToPxMtx(Cb, encoded.width, encoded.height).flat(),
-            mcuMtxToPxMtx(Cr, encoded.width, encoded.height).flat(),
+            flatMcuMtx(Y, encoded.width, encoded.height).flat(),
+            flatMcuMtx(Cb, encoded.width, encoded.height).flat(),
+            flatMcuMtx(Cr, encoded.width, encoded.height).flat(),
         ],
         spliced = splice(composed, encoded.width, encoded.height, cpu);
 
@@ -717,18 +751,17 @@ const decodeJpeg = (encoded, canvas) => {
         encoded.width,
     );
 
-    console.log(encoded.sampleRate);
-
     render(drawable);
 };
 
 let jpeg = () => {
+    // Shared worker thread to avoid spawning new threads.
     const worker = new Worker('plugin/jpeg/src/jpeg.worker.js');
 
     return {
         encode: (src, qualityLuma, qualityChroma, sampleRate) =>
             encodeJpeg(src, qualityLuma, qualityChroma, sampleRate, worker),
-        decode: decodeJpeg,
+        decode: (encoded, canvas) => decodeJpeg(encoded, canvas),
         close: () => worker.terminate(),
     };
 };
@@ -779,8 +812,8 @@ const JPEG = async ({ srcUri, gpu, cpu, canvas }) => {
     return {
         toDct: (mcu) => toDct(mcu, _cpu),
         fromDct: (mcu) => fromDct(mcu, _gpu),
-        toBlocks,
-        fromBlocks: mcuMtxToPxMtx,
+        toBlocks: toMcuBlocks,
+        fromBlocks: flatMcuMtx,
         toDctMap: (mcuArr) => toDctMap(mcuArr, _cpu),
         fromDctMap: (mcuArr) => fromDctMap(mcuArr, _gpu),
         sample,
@@ -792,5 +825,3 @@ const JPEG = async ({ srcUri, gpu, cpu, canvas }) => {
         lumaQuantise: (mcu, factor) => quantise(mcu, lumaTable, factor, _gpu),
     };
 };
-
-let expMcuAsBitmap = (src) => {};

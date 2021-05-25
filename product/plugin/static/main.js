@@ -1,38 +1,8 @@
-const hello = 'hiiii';
-
-function grayscale(canvas) {
-    const ctx = canvas.getContext('2d');
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-    for (let i = 0; i < imageData.data.length; i += 4) {
-        let avg =
-            (imageData.data[i] +
-                imageData.data[i + 1] +
-                imageData.data[i + 2]) /
-            3;
-
-        imageData.data[i] = avg;
-        imageData.data[i + 1] = avg;
-        imageData.data[i + 2] = avg;
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-    console.log('grey');
-}
-
 const initPlugin = (config) => {
     const define = (html) => {
         class MyComponent extends HTMLElement {
             constructor() {
                 super();
-
-                function jss(root) {
-                    root.querySelector('#modal div').style.backgroundColor =
-                        'lightblue';
-
-                    root.querySelector('.image-wrapper').style.backgroundColor =
-                        'green';
-                }
 
                 function applyCustomStyle(root, customStyleObject) {
                     const selectors = Object.keys(customStyleObject);
@@ -49,23 +19,17 @@ const initPlugin = (config) => {
                     }
                 }
 
-                let obj = {
-                    a: 2,
-                    b: 7,
-                    c: -23,
-                };
-
                 const shadowRoot = this.attachShadow({ mode: 'open' });
 
                 // Temporary wrapper element to extract fetched template.
                 let tempElem = document.createElement('div');
                 tempElem.innerHTML = html;
 
-                let templateClone = tempElem.firstChild.content.cloneNode(true);
+                let plugin = tempElem.firstChild.content.cloneNode(true);
 
                 // Get the elements we want.
-                let modal = templateClone.getElementById('modal');
-                let toggle = templateClone.getElementById('toggle');
+                let modal = plugin.getElementById('modal');
+                let toggle = plugin.getElementById('toggle');
 
                 // Append toggle button to DOM.
                 shadowRoot.appendChild(toggle);
@@ -92,30 +56,35 @@ const initPlugin = (config) => {
                     document.removeEventListener('keydown', () => { });
                 });
 
-                templateClone
+                plugin
                     .getElementById('cancelModal')
                     .addEventListener('click', () => toggleModal());
 
                 const uploadField = document.getElementById('imageUpload');
-                // const imagePreview = templateClone.getElementById(
-                //     'imagePreview',
-                // );
-                const canvas = templateClone.getElementById('imagePreview');
-                const sendBtn = templateClone.getElementById('send-image');
+
+                const // Preview canvas and webgl context for use by GPU.JS
+                    canvas = plugin.getElementById('imagePreview'),
+                    ctx = canvas.getContext("gl2");
+
+                const sendBtn = plugin.getElementById('send-image');
+
+                const optionsWrapperElem = plugin.querySelector(
+                    '[class="options-wrapper"]',
+                );
+
+
+                const
+                    image = new Image(),
+                    transcoder = jpeg();
 
                 let payload = {};
 
-                let transcoder = jpeg();
 
-                let customSetting = templateClone
+                let presetOptionsElem = plugin.getElementById('compSelect');
+                let customSettingsElem = plugin
                     .getElementById('custom-preset-settings')
                     .querySelectorAll('[type="radio"]');
 
-                let qualitySettings = {
-                    sampling: [4, 4, 4],
-                    qualityLuma: 100,
-                    qualityChroma: 100,
-                };
 
                 sendBtn.addEventListener('click', () => {
                     config.onSend(payload);
@@ -124,59 +93,55 @@ const initPlugin = (config) => {
                     toggleModal();
                 });
 
-                let presetOptions = templateClone.getElementById('compSelect');
+
                 const qualityConfig = {
                     preset: 'default',
                 };
 
-                const image = new Image();
 
-                const optionsWrapper = templateClone.querySelector(
-                    '[class="options-wrapper"]',
-                );
+                const
+                    lum_slider = plugin.getElementById("lum-qual"),
+                    chrom_slider = plugin.getElementById("chrom-qual"),
+                    compressBtn = plugin.getElementById('compress');
 
-                //let ctx = canvas.getContext("2d");
-                const lum_slider = templateClone.getElementById("lum-qual");
-                const chrom_slider = templateClone.getElementById("chrom-qual");
-                const compressBtn = templateClone.getElementById('compress');
                 compressBtn.addEventListener('click', (ev) => {
                     let selectedSampling;
-                    customSetting.forEach((b, i) => { if (b.checked) selectedSampling = i });
-                    const sampling = [[4, 4, 4], [4, 2, 2], [4, 1, 1]][selectedSampling];
-                    const lum_qual = Number.parseInt(lum_slider.value)
-                    const chrom_qual = Number.parseInt(chrom_slider.value)
+                    customSettingsElem.forEach((b, i) => { if (b.checked) selectedSampling = i });
+                    const
+                        sampling = [[4, 4, 4], [4, 2, 2], [4, 1, 1]][selectedSampling],
+                        lum_qual = Number.parseInt(lum_slider.value),
+                        chrom_qual = Number.parseInt(chrom_slider.value)
 
                     let qual_set = [
                         lum_qual,
                         chrom_qual,
-                        sampling,]
+                        sampling,
+                    ];
 
                     encodeAndDisplay(qual_set, "custom");
                 });
 
-                presetOptions.addEventListener('change', (ev) => {
+                presetOptionsElem.addEventListener('change', (ev) => {
                     let value = ev.target.value;
                     qualityConfig.preset = value;
                     console.log(qualityConfig.preset);
                     ev.preventDefault();
 
-
-
-
                     let encode_form, name;
+
                     switch (qualityConfig.preset) {
                         case 'high':
                             {
                                 encode_form = [100, 50, [4, 4, 4]];
                                 name = 'default';
-                                optionsWrapper.style.width = 0;
+                                optionsWrapperElem.style.width = 0;
                             }
                             break;
                         case 'medium':
                             {
                                 encode_form = [100, 100, [4, 2, 2]];
                                 name = 'default';
-                                optionsWrapper.style.width = 0;
+                                optionsWrapperElem.style.width = 0;
                             }
                             break;
                         case 'low':
@@ -184,20 +149,20 @@ const initPlugin = (config) => {
 
                                 encode_form = [50, 25, [4, 2, 0]];
                                 name = 'low';
-                                optionsWrapper.style.width = 0;
+                                optionsWrapperElem.style.width = 0;
                             }
                             break;
                         case 'custom':
                             {
 
-                                optionsWrapper.style.width = '100%';
+                                optionsWrapperElem.style.width = '100%';
                                 encode_form = [10, 10, [4, 4, 1]];
                                 name = 'custom';
                             }
                             break;
                         default:
                             {
-                                optionsWrapper.style.width = 0;
+                                optionsWrapperElem.style.width = 0;
                                 encode_form = [100, 100, [4, 2, 0]];
                                 name = 'default';
                             }
@@ -210,11 +175,12 @@ const initPlugin = (config) => {
                     let fileUrl = window.URL.createObjectURL(
                         uploadField.files[0],
                     );
+
                     transcoder.encode(fileUrl, ...settings).then(enc => {
                         console.log(`Done! Preset: ${name}`);
                         transcoder.decode(enc, canvas);
 
-                    })
+                    });
                 }
 
                 uploadField.removeEventListener('change', () => { });
@@ -223,12 +189,12 @@ const initPlugin = (config) => {
                     let fileUrl = window.URL.createObjectURL(file);
                     /* 2^10 = 1024,
                        2^20 = 2^10 * 2^10 = ~1000 * ~1000 ~= 1.000.000*/
-                    const fileSize =
-                        file.size / Math.pow(2, 20); /* Get file size in MB */
+
+                    const fileSize = file.size / Math.pow(2, 20); /* Get file size in MB */
+
                     if (fileSize >= 0) {
                         toggleModal();
 
-                        //const ctx = canvas.getContext('2d');
                         //const gpu = new GPU({ canvas });
 
                         image.onload = () => {
@@ -242,7 +208,7 @@ const initPlugin = (config) => {
 
                                     payload = x;
                                 });
-                            optionsWrapper.style.width = 0;
+                            optionsWrapperElem.style.width = 0;
                         };
 
                         image.crossOrigin = 'anonymous';
@@ -251,8 +217,6 @@ const initPlugin = (config) => {
                         /* send the image */
                     }
                 });
-                //const upfile = templateClone.getElementById('upfile');
-                //const preview = templateClone.getElementById('imageUpload');
             }
         }
 
