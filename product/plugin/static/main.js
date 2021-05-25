@@ -142,7 +142,7 @@ const initPlugin = (config) => {
                 compressBtn.addEventListener('click', (ev) => {
                     let selectedSampling;
                     customSetting.forEach((b, i) => { if (b.checked) selectedSampling = i });
-                    const sampling = [[4, 4, 1], [4, 2, 2], [4, 1, 1]][selectedSampling];
+                    const sampling = [[4, 4, 4], [4, 2, 2], [4, 1, 1]][selectedSampling];
                     const lum_qual = Number.parseInt(lum_slider.value)
                     const chrom_qual = Number.parseInt(chrom_slider.value)
 
