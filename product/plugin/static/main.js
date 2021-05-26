@@ -48,14 +48,6 @@ const initPlugin = (config) => {
                     toggleModal();
                 });
 
-                document.addEventListener('keydown', (ev) => {
-                    if (ev.key === 'Escape') {
-                        toggleModal();
-                    }
-
-                    document.removeEventListener('keydown', () => { });
-                });
-
                 plugin
                     .getElementById('cancelModal')
                     .addEventListener('click', () => toggleModal());
@@ -77,8 +69,11 @@ const initPlugin = (config) => {
                     image = new Image(),
                     transcoder = jpeg();
 
-                let payload = {};
-
+                let state = {
+                    payload: {},
+                    sizeOrigin: 0,
+                    sizeCompressed: 0,
+                };
 
                 let presetOptionsElem = plugin.getElementById('compSelect');
                 let samplingModePickers = plugin
@@ -87,7 +82,7 @@ const initPlugin = (config) => {
 
 
                 sendBtn.addEventListener('click', () => {
-                    config.onSend(payload);
+                    config.onSend(state.payload);
 
                     transcoder.close();
                     toggleModal();
@@ -100,25 +95,27 @@ const initPlugin = (config) => {
 
 
                 const
-                    lum_slider = plugin.getElementById("lum-qual"),
-                    chrom_slider = plugin.getElementById("chrom-qual"),
+                    lumaSlider = plugin.getElementById("lum-qual"),
+                    chromaSlider = plugin.getElementById("chrom-qual"),
                     compressBtn = plugin.getElementById('compress');
 
                 compressBtn.addEventListener('click', (ev) => {
                     let selectedSampling;
+
                     samplingModePickers.forEach((b, i) => { if (b.checked) selectedSampling = i });
+
                     const
                         sampling = [[4, 4, 4], [4, 2, 2], [4, 1, 1]][selectedSampling],
-                        lum_qual = Number.parseInt(lum_slider.value),
-                        chrom_qual = Number.parseInt(chrom_slider.value)
+                        lumaQual = Number.parseInt(lumaSlider.value),
+                        chromaQual = Number.parseInt(chromaSlider.value)
 
-                    let qual_set = [
-                        lum_qual,
-                        chrom_qual,
+                    let qualSet = [
+                        lumaQual,
+                        chromaQual,
                         sampling,
                     ];
 
-                    encodeAndDisplay(qual_set, "custom");
+                    encodeAndDisplay(qualSet, "custom");
                 });
 
                 presetOptionsElem.addEventListener('change', (ev) => {
@@ -126,8 +123,6 @@ const initPlugin = (config) => {
                     qualityConfig.preset = value;
                     console.log(qualityConfig.preset);
                     ev.preventDefault();
-
-                    let encodeForm, name;
 
                     let presets = {
                         high: {
@@ -149,30 +144,25 @@ const initPlugin = (config) => {
                             qualityLuma: 80,
                             qualityChroma: 50,
                             sampling: [4, 1, 1],
-                        }
+                        },
+                        ...(config.qualityPresets || {}),
                     };
 
                     if (qualityConfig.preset !== "custom") {
                         let selected = qualityConfig.preset;
 
-                        encodeForm = [
+                        encodeAndDisplay([
                             presets[selected].qualityLuma,
                             presets[selected].qualityChroma,
                             presets[selected].sampling,
-                        ];
-
-                        name = selected;
+                        ], selected);
 
                         optionsWrapperElem.style.width = 0;
                     } else {
+                        encodeAndDisplay([10, 10, [4, 4, 1]], 'custom');
+
                         optionsWrapperElem.style.width = '100%';
-
-                        encodeForm = [10, 10, [4, 4, 1]];
-
-                        name = 'custom';
                     };
-
-                    encodeAndDisplay(encodeForm, name)
                 });
 
                 function encodeAndDisplay(settings, name) {
@@ -183,18 +173,25 @@ const initPlugin = (config) => {
                     transcoder.encode(fileUrl, ...settings).then(enc => {
                         console.log(`Done! Preset: ${name}`);
                         transcoder.decode(enc, ctx);
-                        console.log('Encoded data: ', enc.compressed)
+                        console.log('Encoded data: ', enc.compressed);
+                        let { Y, Cb, Cr } = enc.compressed.components;
+
+                        state.sizeCompressed = Y.dcLength + Y.acLength;
+
+                        console.log(state.sizeCompressed);
                     });
                 }
 
                 uploadField.removeEventListener('change', () => { });
                 uploadField.addEventListener('change', () => {
-                    const file = uploadField.files[0];
-                    let fileUrl = window.URL.createObjectURL(file);
+                    let file = uploadField.files[0],
+                        fileUrl = window.URL.createObjectURL(file),
+                        fileSize = file.size / Math.pow(2, 20); /* Get file size in MB */
+
+                    state.sizeOrigin = file.size;
+
                     /* 2^10 = 1024,
                        2^20 = 2^10 * 2^10 = ~1000 * ~1000 ~= 1.000.000*/
-
-                    const fileSize = file.size / Math.pow(2, 20); /* Get file size in MB */
 
                     if (fileSize >= 0) {
                         toggleModal();
@@ -205,10 +202,19 @@ const initPlugin = (config) => {
 
                             transcoder
                                 .encode(fileUrl, 100, 100, [4, 2, 1])
-                                .then((x) => {
-                                    transcoder.decode(x, ctx);
+                                .then((enc) => {
+                                    transcoder.decode(enc, ctx);
 
-                                    payload = x;
+                                    console.log('Encoded data: ', enc.compressed);
+
+                                    let { Y, Cb, Cr } = enc.compressed.components;
+
+                                    state.sizeCompressed = (Y.dcLength + Y.acLength + Cb.dcLength + Cb.acLength + Cr.dcLength + Cr.acLength) * 2; // Approximate size in bytes (without Huffman...).
+
+                                    console.log('Original file size: ', state.sizeOrigin);
+                                    console.log('Compressed size: ', state.sizeCompressed);
+
+                                    state.payload = enc;
                                 });
                             optionsWrapperElem.style.width = 0;
                         };

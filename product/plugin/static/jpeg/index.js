@@ -69,6 +69,50 @@ const toDctMap = (mcuArr, gpu) =>
 		},
 	)(mcuArr, [1 / Math.SQRT2, 1, 1, 1, 1, 1, 1, 1]);
 
+
+const toDctMap2 = (mcuArr, gpu) => {
+    let _gpu = gpu || new GPU({ mode: 'cpu' });
+
+    let fdct = _gpu.createKernel(
+        function (arr, C, cosines) {
+            let u = this.thread.x,
+                v = this.thread.y,
+                sum = 0.0;
+
+            for (let x = 0; x < 8; x++)
+                for (let y = 0; y < 8; y++)
+                    sum +=
+                        (arr[this.thread.z][y][x] - 128) *
+                        cosines[u][x] *
+                        cosines[v][y];
+
+            return Math.round((1 / 4) * C[u] * C[v] * sum);
+        },
+        {
+            output: [8, 8, mcuArr.length],
+            precision: 'single',
+        },
+    );
+
+    let cosines = _gpu.createKernel(
+        function () {
+            let { x, y } = this.thread;
+
+            return Math.cos(((2 * x + 1) * y * Math.PI) / 16);
+        },
+        {
+            output: [8, 8],
+            precision: 'single',
+        },
+    );
+
+    let out = _gpu.combineKernels(fdct, cosines, function (arr, C) {
+        return fdct(arr, C, cosines());
+    });
+
+    return out(mcuArr, [1 / Math.SQRT2, 1, 1, 1, 1, 1, 1, 1]);
+};
+
 /**
  * IDCT function based on JPEG spec of 1992 from CCITT Recommendation T.81.
  * @param {number[][]} mcu MCU with FDCT applied.
@@ -219,30 +263,10 @@ const flatMcuMtx = (mcuMtx, w, h) => {
 };
 
 /**
- *
- * @param {number[]} data Example: Cb[][].zigzag()
- * @returns {}
+ * Zero biased RLE implementation.
+ * @param {number[]} data Array of values.
+ * @returns Array with zero runs encoded as a zero followed by the run length.
  */
-const rle = (data) => {
-	let out = []
-
-	let i = 0;
-	while (i < data.length) {
-		let j = 0;
-
-		while (data[i + j] === 0) {
-			j++;
-		}
-		out.push(data[i])
-		if (j >= 1) {
-			out.push(j);
-		}
-		i += j;
-	}
-
-	return out;
-};
-
 const zeroRle = (data) => {
     let out = [];
 
@@ -575,6 +599,27 @@ const fromRgb = (data, n) => {
 
 	return out;
 };
+
+const newQuantTable = (table, quality, gpu) =>
+    (gpu || new GPU({ mode: 'cpu' })).createKernel(
+        function (table, quality) {
+            let { x, y } = this.thread,
+                scaleFactor = 0;
+
+            if (quality < 50) {
+                scaleFactor = 5000 / quality;
+            } else {
+                scaleFactor = 200 - quality * 2;
+            }
+
+            return Math.round((scaleFactor * table[x][y] + 50) / 100);
+        },
+        {
+            output: [8, 8],
+            precision: 'single',
+            returnType: 'Integer',
+        },
+    )(table, quality);
 
 const encodeJpeg = (srcUri, qualityLuma, qualityChroma, sampleRate, worker) =>
     new Promise((resolve) => {

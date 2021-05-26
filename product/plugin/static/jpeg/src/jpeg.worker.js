@@ -14,6 +14,9 @@ onmessage = (ev) => {
         sampleRate,
     } = ev.data;
 
+    let lumaTableNew = newQuantTable(lumaTable, gpu),
+        chromaTableNew = newQuantTable(chromaTable, gpu);
+
     let yuv = fromRgb(pxs, 4),
         allChannels = getAllChannels(yuv, 4).map((c) => to2d(c, imgWidth)),
         [cY, cCb, cCr] = upscaleComps(
@@ -22,19 +25,19 @@ onmessage = (ev) => {
         ),
         encodedComps = [
             quantiseMap(
-                toDctMap(levelShift(toMcuBlocks(cY).flat()), cpu),
+                toDctMap2(toMcuBlocks(cY).flat()),
                 lumaTable,
                 qualityLuma,
                 gpu,
             ),
             quantiseMap(
-                toDctMap(levelShift(toMcuBlocks(cCb).flat()), cpu),
+                toDctMap2(toMcuBlocks(cCb).flat()),
                 chromaTable,
                 qualityChroma,
                 gpu,
             ),
             quantiseMap(
-                toDctMap(levelShift(toMcuBlocks(cCr).flat()), cpu),
+                toDctMap2(toMcuBlocks(cCr).flat()),
                 chromaTable,
                 qualityChroma,
                 gpu,
@@ -62,22 +65,34 @@ onmessage = (ev) => {
     let dcCoeffs = zigzagComps.map(comp => comp.map(mcu => mcu[0])),
         acCoeffs = zigzagComps.map(comp => comp.map(mcu => mcu.slice(1)));
 
-    let dcCoeffsDpcm = dcCoeffs.map(comp => Int16Array.from(dpcm(comp))),
-        acCoeffsRle = acCoeffs.map(comp => comp.map(coeffs => Int16Array.from(zeroRle(coeffs))));
+    let dcCoeffsDpcm = dcCoeffs.map(comp => Int8Array.from(dpcm(comp))),
+        acCoeffsRle = acCoeffs.map(comp => comp.map(coeffs => Int8Array.from(zeroRle(coeffs))));
 
     let compressed = {
         components: {
             Y: {
                 dcData: dcCoeffsDpcm[0],
                 acData: acCoeffsRle[0],
+
+                // Component lengths for size comparison.
+                dcLength: dcCoeffsDpcm[0].length,
+                acLength: acCoeffsRle[0].reduce((acc, curr) => acc + curr.length, 0),
             },
             Cb: {
                 dcData: dcCoeffsDpcm[1],
                 acData: acCoeffsRle[1],
+
+                // Component lengths for size comparison.
+                dcLength: dcCoeffsDpcm[1].length,
+                acLength: acCoeffsRle[1].reduce((acc, curr) => acc + curr.length, 0),
             },
             Cr: {
                 dcData: dcCoeffsDpcm[2],
                 acData: acCoeffsRle[2],
+
+                // Component lengths for size comparison.
+                dcLength: dcCoeffsDpcm[2].length,
+                acLength: acCoeffsRle[2].reduce((acc, curr) => acc + curr.length, 0),
             },
         }
     };
