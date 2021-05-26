@@ -64,7 +64,7 @@ const initPlugin = (config) => {
 
                 const // Preview canvas and webgl context for use by GPU.JS
                     canvas = plugin.getElementById('imagePreview'),
-                    ctx = canvas.getContext("gl2");
+                    ctx = canvas.getContext("webgl2");
 
                 const sendBtn = plugin.getElementById('send-image');
 
@@ -127,48 +127,52 @@ const initPlugin = (config) => {
                     console.log(qualityConfig.preset);
                     ev.preventDefault();
 
-                    let encode_form, name;
+                    let encodeForm, name;
 
-                    switch (qualityConfig.preset) {
-                        case 'high':
-                            {
-                                encode_form = [100, 50, [4, 4, 4]];
-                                name = 'default';
-                                optionsWrapperElem.style.width = 0;
-                            }
-                            break;
-                        case 'medium':
-                            {
-                                encode_form = [100, 100, [4, 2, 2]];
-                                name = 'default';
-                                optionsWrapperElem.style.width = 0;
-                            }
-                            break;
-                        case 'low':
-                            {
+                    let presets = {
+                        high: {
+                            qualityLuma: 100,
+                            qualityChroma: 50,
+                            sampling: [4, 4, 4],
+                        },
+                        medium: {
+                            qualityLuma: 75,
+                            qualityChroma: 35,
+                            sampling: [4, 2, 2],
+                        },
+                        low: {
+                            qualityLuma: 50,
+                            qualityChroma: 25,
+                            sampling: [4, 2, 0],
+                        },
+                        default: {
+                            qualityLuma: 80,
+                            qualityChroma: 50,
+                            sampling: [4, 1, 1],
+                        }
+                    };
 
-                                encode_form = [50, 25, [4, 2, 0]];
-                                name = 'low';
-                                optionsWrapperElem.style.width = 0;
-                            }
-                            break;
-                        case 'custom':
-                            {
+                    if (qualityConfig.preset !== "custom") {
+                        let selected = qualityConfig.preset;
 
-                                optionsWrapperElem.style.width = '100%';
-                                encode_form = [10, 10, [4, 4, 1]];
-                                name = 'custom';
-                            }
-                            break;
-                        default:
-                            {
-                                optionsWrapperElem.style.width = 0;
-                                encode_form = [100, 100, [4, 2, 0]];
-                                name = 'default';
-                            }
-                            break;
-                    }
-                    encodeAndDisplay(encode_form, name)
+                        encodeForm = [
+                            presets[selected].qualityLuma,
+                            presets[selected].qualityChroma,
+                            presets[selected].sampling,
+                        ];
+
+                        name = selected;
+
+                        optionsWrapperElem.style.width = 0;
+                    } else {
+                        optionsWrapperElem.style.width = '100%';
+
+                        encodeForm = [10, 10, [4, 4, 1]];
+
+                        name = 'custom';
+                    };
+
+                    encodeAndDisplay(encodeForm, name)
                 });
 
                 function encodeAndDisplay(settings, name) {
@@ -178,8 +182,8 @@ const initPlugin = (config) => {
 
                     transcoder.encode(fileUrl, ...settings).then(enc => {
                         console.log(`Done! Preset: ${name}`);
-                        transcoder.decode(enc, canvas);
-
+                        transcoder.decode(enc, ctx);
+                        console.log('Encoded data: ', enc.compressed)
                     });
                 }
 
@@ -195,16 +199,14 @@ const initPlugin = (config) => {
                     if (fileSize >= 0) {
                         toggleModal();
 
-                        //const gpu = new GPU({ canvas });
-
                         image.onload = () => {
-                            canvas.width = image.width;
-                            canvas.height = image.height;
+                            canvas.width = image.width - image.width % 8;
+                            canvas.height = image.height - image.height % 8;
 
                             transcoder
                                 .encode(fileUrl, 100, 100, [4, 2, 1])
                                 .then((x) => {
-                                    transcoder.decode(x, canvas);
+                                    transcoder.decode(x, ctx);
 
                                     payload = x;
                                 });

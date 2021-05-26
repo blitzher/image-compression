@@ -1,7 +1,5 @@
 'use strict';
 
-//const gpu = new GPU({ mode: 'cpu' }); // Global instance of GPU.JS.
-
 const cosines = (gpu) =>
 	(gpu || new GPU({ mode: 'cpu' })).createKernel(
 		function () {
@@ -14,8 +12,6 @@ const cosines = (gpu) =>
 			precision: 'single',
 		},
 	);
-
-//const C = [1 / Math.SQRT2, 1, 1, 1, 1, 1, 1, 1];
 
 /**
  * FDCT function based on JPEG spec of 1992 from CCITT Recommendation T.81.
@@ -130,67 +126,6 @@ const fromDctMap = (mcuArr, gpu) =>
 	)(mcuArr, [1 / Math.SQRT2, 1, 1, 1, 1, 1, 1, 1]);
 
 /**
- * Non-GPU.JS JPEG methods for reference.
- */
-
-const fdctControlImpl = (mcu) => {
-	let out = [];
-
-	let C = [1 / Math.SQRT2, 1, 1, 1, 1, 1, 1, 1];
-
-	for (let u = 0; u < 8; u++) {
-		out.push([]);
-
-		for (let v = 0; v < 8; v++) {
-			let local = 0.0;
-
-			for (let x = 0; x < 8; x++) {
-				for (let y = 0; y < 8; y++) {
-					local +=
-						mcu[x][y] *
-						Math.cos(((2 * x + 1) * u * Math.PI) / 16) *
-						Math.cos(((2 * y + 1) * v * Math.PI) / 16);
-				}
-			}
-
-			out[u].push(Math.round((1 / 4) * C[u] * C[v] * local));
-		}
-	}
-
-	return out;
-};
-
-const idctControlImpl = (mcu) => {
-	let out = [];
-
-	let C = [1 / Math.SQRT2, 1, 1, 1, 1, 1, 1, 1];
-
-	for (let y = 0; y < 8; y++) {
-		out.push([]);
-
-		for (let x = 0; x < 8; x++) {
-			let local = 0.0;
-
-			for (let u = 0; u < 8; u++) {
-				for (let v = 0; v < 8; v++) {
-					local +=
-						C[u] *
-						C[v] *
-						mcu[v][u] *
-						Math.cos(((2 * x + 1) * u * Math.PI) / 16) *
-						Math.cos(((2 * y + 1) * v * Math.PI) / 16);
-				}
-			}
-
-			out[y].push(Math.round((1 / 4) * local));
-		}
-	}
-
-	return out;
-};
-
-
-/**
  * Python style range function.
  * @param {number} a Length
  * @returns
@@ -288,7 +223,7 @@ const flatMcuMtx = (mcuMtx, w, h) => {
  * @param {number[]} data Example: Cb[][].zigzag()
  * @returns {}
  */
-let rle = (data) => {
+const rle = (data) => {
 	let out = []
 
 	let i = 0;
@@ -307,6 +242,33 @@ let rle = (data) => {
 
 	return out;
 };
+
+const zeroRle = (data) => {
+    let out = [];
+
+    let i = 0,
+        c = 0;
+
+    while (i < data.length) {
+        if (data[i] === 0) {
+            c++;
+            i++;
+            if (data[i + 1] !== 0) {
+                out.push(0);
+                out.push(c);
+                c = 0;
+                i++;
+            }
+        } else {
+            out.push(data[i]);
+            i++;
+        }
+    }
+
+    return out;
+};
+
+const dpcm = (comp) => comp.map((dc, i, arr) => i === 0 ? dc : dc - arr[i - 1]);
 
 /**
  * Supsample chrominance component.
@@ -455,6 +417,14 @@ const quantise = (mcu, table, factor, gpu) =>
 		},
 	)(mcu, table, factor);
 
+/**
+ * Quantise MCU array.
+ * @param {Array(8)[][]} mcuArr
+ * @param {Array(8)[]} table
+ * @param {number} quality
+ * @param {object} gpu
+ * @returns
+ */
 const quantiseMap = (mcuArr, table, quality, gpu) =>
 	(gpu || new GPU({ mode: 'cpu' })).createKernel(
 		function (mcu, table, quality) {
@@ -502,7 +472,10 @@ const deQuantiseMap = (mcuArr, table, quality, gpu) =>
 	)(mcuArr, table, quality);
 
 const levelShift = (mcuArr) =>
-	mcuArr.map((mcu) => mcu.map((row) => row.map((val) => val - 128)));
+    mcuArr.map((mcu) => mcu.map((row) => row.map((val) => val - 128)));
+
+const levelShiftUp = (mcuArr) =>
+    mcuArr.map((mcu) => mcu.map((row) => row.map((val) => val + 128)));
 
 const drawComponents = ([C0, C1, C2], gpu) => {
 	let render = (gpu || new GPU()).createKernel(
@@ -536,33 +509,33 @@ const splice = ([a, b, c], w, h, gpu) =>
 
 const crop = (mtx, w, h) => mtx.slice(0, h).map((r) => r.slice(0, w));
 
-const fromYuv = (data, n) => {
-	let out = [];
+const fromYCbCr = (data, n) => {
+    let out = [];
 
-	for (let i = 0; i < data.length; i += n) {
-		let y = data[i],
-			cb = data[i + 1],
-			cr = data[i + 2];
+    for (let i = 0; i < data.length; i += n) {
+        let y = data[i],
+            cb = data[i + 1],
+            cr = data[i + 2];
 
-		out.push(
-			Math.min(Math.max(0, Math.round(y + 1.402 * (cr - 128))), 255),
-		);
-		out.push(
-			Math.min(
-				Math.max(
-					0,
-					Math.round(y - 0.3441 * (cb - 128) - 0.7141 * (cr - 128)),
-				),
-				255,
-			),
-		);
-		out.push(
-			Math.min(Math.max(0, Math.round(y + 1.772 * (cb - 128))), 255),
-		);
-		if (n === 4) out.push(255);
-	}
+        out.push(
+            Math.min(Math.max(0, Math.round(y + 1.402 * (cr - 128))), 255),
+        );
+        out.push(
+            Math.min(
+                Math.max(
+                    0,
+                    Math.round(y - 0.3441 * (cb - 128) - 0.7141 * (cr - 128)),
+                ),
+                255,
+            ),
+        );
+        out.push(
+            Math.min(Math.max(0, Math.round(y + 1.772 * (cb - 128))), 255),
+        );
+        if (n === 4) out.push(255);
+    }
 
-	return out;
+    return out;
 };
 
 const fromRgb = (data, n) => {
@@ -603,173 +576,173 @@ const fromRgb = (data, n) => {
 	return out;
 };
 
-const encodeJpeg = (srcUri, qualityLuma, qualityChroma, sampleRate, _worker) =>
-	new Promise((resolve) => {
-		const
-			worker = _worker || new Worker('plugin/jpeg/src/jpeg.worker.js'),
-			gpu = new GPU(),
-			img = new Image();
+const encodeJpeg = (srcUri, qualityLuma, qualityChroma, sampleRate, worker) =>
+    new Promise((resolve) => {
+        const
+            gpu = new GPU(),
+            img = new Image();
 
-		// Quantisation tables as provided by the JPEG specification.
-		let chromaTable = [
-			[17, 18, 24, 47, 99, 99, 99, 99],
-			[18, 21, 26, 66, 99, 99, 99, 99],
-			[24, 26, 56, 99, 99, 99, 99, 99],
-			[47, 66, 99, 99, 99, 99, 99, 99],
-			[99, 99, 99, 99, 99, 99, 99, 99],
-			[99, 99, 99, 99, 99, 99, 99, 99],
-			[99, 99, 99, 99, 99, 99, 99, 99],
-			[99, 99, 99, 99, 99, 99, 99, 99],
-		],
-			lumaTable = [
-				[16, 11, 10, 16, 24, 40, 51, 61],
-				[12, 12, 14, 19, 26, 58, 60, 55],
-				[14, 13, 16, 24, 40, 57, 69, 56],
-				[14, 17, 22, 29, 51, 87, 80, 62],
-				[18, 22, 37, 56, 68, 109, 103, 77],
-				[24, 35, 55, 64, 81, 104, 113, 92],
-				[49, 64, 78, 87, 103, 121, 120, 101],
-				[72, 92, 95, 98, 112, 100, 103, 99],
-			];
+        // Quantisation tables as provided by the JPEG specification.
+        let chromaTable = [
+                [17, 18, 24, 47, 99, 99, 99, 99],
+                [18, 21, 26, 66, 99, 99, 99, 99],
+                [24, 26, 56, 99, 99, 99, 99, 99],
+                [47, 66, 99, 99, 99, 99, 99, 99],
+                [99, 99, 99, 99, 99, 99, 99, 99],
+                [99, 99, 99, 99, 99, 99, 99, 99],
+                [99, 99, 99, 99, 99, 99, 99, 99],
+                [99, 99, 99, 99, 99, 99, 99, 99],
+            ],
+            lumaTable = [
+                [16, 11, 10, 16, 24, 40, 51, 61],
+                [12, 12, 14, 19, 26, 58, 60, 55],
+                [14, 13, 16, 24, 40, 57, 69, 56],
+                [14, 17, 22, 29, 51, 87, 80, 62],
+                [18, 22, 37, 56, 68, 109, 103, 77],
+                [24, 35, 55, 64, 81, 104, 113, 92],
+                [49, 64, 78, 87, 103, 121, 120, 101],
+                [72, 92, 95, 98, 112, 100, 103, 99],
+            ];
 
-		img.onload = () => {
-			let initWidth = img.width,
-				initHeight = img.height,
-				imgWidth = initWidth - (initWidth % 8),
-				imgHeight = initHeight - (initHeight % 8);
+        img.onload = () => {
+            let initWidth = img.width,
+                initHeight = img.height,
+                imgWidth = initWidth - (initWidth % 8),
+                imgHeight = initHeight - (initHeight % 8);
 
-			// Render function to get pixel values from HTML Image object.
-			const render = gpu.createKernel(
-				function (image) {
-					let px = image[this.thread.y][this.thread.x];
+            // Render function to get pixel values from HTML Image object.
+            const render = gpu.createKernel(
+                function (image) {
+                    let px = image[this.thread.y][this.thread.x];
 
-					this.color(px[0], px[1], px[2]);
-				},
-				{
-					output: [imgWidth, imgHeight],
-					graphical: true,
-				},
-			);
+                    this.color(px[0], px[1], px[2]);
+                },
+                {
+                    output: [imgWidth, imgHeight],
+                    graphical: true,
+                },
+            );
 
-			worker.onmessage = (ev) => {
-				resolve({
-					components: {
-						Y: ev.data.encodedComps[0],
-						Cb: ev.data.encodedComps[1],
-						Cr: ev.data.encodedComps[2],
-					},
-					width: imgWidth,
-					height: imgHeight,
-					lumaTable,
-					chromaTable,
-					qualityChroma,
-					qualityLuma,
-					sampleRate,
-				});
-			};
+            worker.onmessage = (ev) => {
+                resolve({
+                    components: {
+                        Y: ev.data.encodedComps[0],
+                        Cb: ev.data.encodedComps[1],
+                        Cr: ev.data.encodedComps[2],
+                    },
+                    compressed: ev.data.compressed,
+                    width: imgWidth,
+                    height: imgHeight,
+                    lumaTable,
+                    chromaTable,
+                    qualityChroma,
+                    qualityLuma,
+                    sampleRate,
+                });
+            };
 
-			render(img); // Render image before exstracting pixels.
+            render(img); // Render image before exstracting pixels.
 
-			worker.postMessage({
-				imgWidth,
-				imgHeight,
-				lumaTable,
-				chromaTable,
-				qualityChroma,
-				qualityLuma,
-				sampleRate,
-				pxs: render.getPixels(), // Extracted pixels.
-			});
-		};
+            worker.postMessage({
+                imgWidth,
+                imgHeight,
+                lumaTable,
+                chromaTable,
+                qualityChroma,
+                qualityLuma,
+                sampleRate,
+                pxs: render.getPixels(), // Extracted pixels.
+            });
+        };
 
-		img.src = srcUri;
-	});
+        img.src = srcUri;
+    });
 
-const decodeJpeg = (encoded, canvas, context) => {
-	const
-		gpu = new GPU({ canvas }),
-		cpu = new GPU({ mode: 'cpu' });
+const decodeJpeg = (encoded, context) => {
+    const
+        gpu = new GPU({ mode: 'gpu', context }),
+        cpu = new GPU({ mode: 'cpu' });
 
-	const render = gpu.createKernel(
-		function (pxMtx) {
-			let { x, y } = this.thread,
-				N = this.constants.N;
+    const render = gpu.createKernel(
+        function (pxMtx) {
+            let { x, y } = this.thread,
+                N = this.constants.N;
 
-			this.color(
-				pxMtx[N - y][x][0] / 255,
-				pxMtx[N - y][x][1] / 255,
-				pxMtx[N - y][x][2] / 255,
-			);
-		},
-		{
-			output: [encoded.width, encoded.height],
-			constants: {
-				N: encoded.height - 1,
-			},
-			graphical: true,
-		},
-	);
+            this.color(
+                pxMtx[N - y][x][0] / 255,
+                pxMtx[N - y][x][1] / 255,
+                pxMtx[N - y][x][2] / 255,
+            );
+        },
+        {
+            output: [encoded.width, encoded.height],
+            constants: {
+                N: encoded.height - 1,
+            },
+            graphical: true,
+        },
+    );
 
-	let [Y, Cb, Cr] = [
-		to2d(
-			fromDctMap(
-				deQuantiseMap(
-					encoded.components.Y,
-					encoded.lumaTable,
-					encoded.qualityLuma,
-					cpu,
-				),
-			),
-			encoded.width / 8,
-		),
-		to2d(
-			fromDctMap(
-				deQuantiseMap(
-					encoded.components.Cb,
-					encoded.chromaTable,
-					encoded.qualityChroma,
-					cpu,
-				),
-			),
-			encoded.width / 8,
-		),
-		to2d(
-			fromDctMap(
-				deQuantiseMap(
-					encoded.components.Cr,
-					encoded.chromaTable,
-					encoded.qualityChroma,
-					cpu,
-				),
-			),
-			encoded.width / 8,
-		),
-	],
-		composed = [
-			flatMcuMtx(Y, encoded.width, encoded.height).flat(),
-			flatMcuMtx(Cb, encoded.width, encoded.height).flat(),
-			flatMcuMtx(Cr, encoded.width, encoded.height).flat(),
-		],
-		spliced = splice(composed, encoded.width, encoded.height, cpu);
+    let [Y, Cb, Cr] = [
+            to2d(
+                levelShiftUp(fromDctMap(
+                    deQuantiseMap(
+                        encoded.components.Y,
+                        encoded.lumaTable,
+                        encoded.qualityLuma,
+                        cpu,
+                    ),
+                )),
+                encoded.width / 8,
+            ),
+            to2d(
+                levelShiftUp(fromDctMap(
+                    deQuantiseMap(
+                        encoded.components.Cb,
+                        encoded.chromaTable,
+                        encoded.qualityChroma,
+                        cpu,
+                    ),
+                )),
+                encoded.width / 8,
+            ),
+            to2d(
+                levelShiftUp(fromDctMap(
+                    deQuantiseMap(
+                        encoded.components.Cr,
+                        encoded.chromaTable,
+                        encoded.qualityChroma,
+                        cpu,
+                    ),
+                )),
+                encoded.width / 8,
+            ),
+        ],
+        composed = [
+            flatMcuMtx(Y, encoded.width, encoded.height).flat(),
+            flatMcuMtx(Cb, encoded.width, encoded.height).flat(),
+            flatMcuMtx(Cr, encoded.width, encoded.height).flat(),
+        ],
+        spliced = splice(composed, encoded.width, encoded.height, cpu);
 
-	let drawable = to2d(
-		to2d(fromYuv(spliced.map((x) => Array.from(x)).flat(), 3), 3),
-		encoded.width,
-	);
+    let drawable = to2d(
+        to2d(fromYCbCr(spliced.map((x) => Array.from(x)).flat(), 3), 3),
+        encoded.width,
+    );
 
-	render(drawable);
+    render(drawable);
 };
 
-let jpeg = () => {
-	// Shared worker thread to avoid spawning new threads.
-	const worker = new Worker('plugin/jpeg/src/jpeg.worker.js');
+const jpeg = () => {
+    // Shared worker thread to avoid spawning new threads.
+    const worker = new Worker('plugin/jpeg/src/jpeg.worker.js');
 
-	return {
-		encode: (src, qualityLuma, qualityChroma, sampleRate) =>
-			encodeJpeg(src, qualityLuma, qualityChroma, sampleRate, worker),
-		decode: (encoded, canvas) => decodeJpeg(encoded, canvas),
-		close: () => worker.terminate(),
-	};
+    return {
+        encode: (src, qualityLuma, qualityChroma, sampleRate) =>
+            encodeJpeg(src, qualityLuma, qualityChroma, sampleRate, worker),
+        decode: (encoded, context) => decodeJpeg(encoded, context),
+        close: () => worker.terminate(),
+    };
 };
 
 /**
