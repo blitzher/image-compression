@@ -5,3 +5,6 @@ other-files/dct/PNG_transparency_demonstration_1.png
 **/node_modules/
 **yarn-error.log
 **yarn.lock
+
+**.exe
+**.out

@@ -1,17 +1,15 @@
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
 
-
-typedef unsigned short uint;
-
-
-typedef struct
-{
+typedef struct{
     char value;
     int freq;
 } ElemFreq;
 
 typedef struct HuffmanNode HuffmanNode;
 
-struct HuffmanNode {
+struct HuffmanNode{
     ElemFreq elem;
     HuffmanNode *left;
     HuffmanNode *right;
