@@ -30,7 +30,7 @@
 
 *Syntax for sequential DCT-based, progressive DCT-based, and lossless modes:*
 
-![High-level syntax](jpeg_high-level.png)
+![High-level syntax](diagrams/jpeg_high-level.png)
 
 | Marker | Description                                                               |
 | ------ | ------------------------------------------------------------------------- |
@@ -40,7 +40,7 @@
 
 #### Frame header syntax
 
-![Frame header syntax](jpeg_frame-header.png)
+![Frame header syntax](diagrams/jpeg_frame-header.png)
 
 | Marker  | Description                                                                         |
 | ------- | ----------------------------------------------------------------------------------- |
@@ -64,11 +64,11 @@
 
 *Frame header parameter sizes and values:*
 
-![Frame header parameter sizes and values](jpeg_frame-header-param.png)
+![Frame header parameter sizes and values](diagrams/jpeg_frame-header-param.png)
 
 #### Scan header syntax
 
-![Scan header syntax](jpeg_scan-header.png)
+![Scan header syntax](diagrams/jpeg_scan-header.png)
 
 | Marker | Description                                                                                        |
 | ------ | -------------------------------------------------------------------------------------------------- |
@@ -90,7 +90,7 @@
 
 *Scan header parameter size and values:*
 
-![Scan header parameter size and values](jpeg_scan-header-param.png)
+![Scan header parameter size and values](diagrams/jpeg_scan-header-param.png)
 
 #### Table-specification and mescellaneous marker segment syntax.
 ...
@@ -116,7 +116,7 @@ Compressed image data missing any table data required for decoding has the abbre
 
 #### Flow of compressed data syntax
 
-![Flow of compressed data syntax](jpeg_flow-of-compressed-data.png)
+![Flow of compressed data syntax](diagrams/jpeg_flow-of-compressed-data.png)
 
 <br/>
 

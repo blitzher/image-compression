@@ -1,3 +1,8 @@
+---
+title: Huffman Notes
+theme: Github
+---
+
 # Notes on the Huffman algorithm
 
 ## Huffman trees (Huffman tables)
@@ -8,7 +13,7 @@ ___
 A Huffman tree is a binary tree where each node contains the sum of frequencies found in its child nodes.
 The leaf nodes at the tip of each branch, contains the encoded character as well as its frequency.
 
-<br>
+<br/>
 
 ### Reading an encoded string:
 
@@ -19,7 +24,7 @@ The current bit signifies going either left or right in the tree, with 0 signify
 
 Character codes can be read as the path from root to leaf.
 
-<br>
+<br/>
 
 ### Constructing Huffman codes:
 
@@ -41,4 +46,3 @@ Huffman(C):
 
     return ExtractMin(Q)    // return the root of the tree.
 ```
-
