@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
 
 typedef uint8_t BITS[16]; /* array of code lengths matching index */
 
@@ -12,6 +13,7 @@ typedef uint16_t *EHUFSI; /* reordering of HUFFSIZE */
 int Generate_Size_table(int, int, int, BITS, HUFFSIZE); /* returns LASTK */
 void Generate_Code_table(int, uint16_t, uint16_t, HUFFSIZE, HUFFCODE);
 void Order_codes(int, int, HUFFVAL, HUFFCODE, HUFFSIZE, EHUFCO, EHUFSI);
+
 
 
 int main() {
@@ -81,6 +83,64 @@ void Order_codes(int K, int last_k, HUFFVAL huffval, HUFFCODE huffcode, HUFFSIZE
 
   if (k < last_k)
     Order_codes(k, last_k, huffval, huffcode, huffsize, ehufco, ehufsi);
+
+  return;
+}
+
+
+int AC_coefficients[10][2] = {{0, 0}, {1, 1}, {2, 3}, {8, 15}, {16, 31},
+                              {32, 63}, {64, 127}, {128, 255}, {256, 511}, {512, 1023}};
+
+
+int csize(int zz_k, int ssss) {
+  if (AC_coefficients[ssss][0] <= abs(zz_k) && abs(zz_k) >= AC_coefficients[ssss][1]) {
+    return ssss;
+  } else return csize(zz_k, ssss + 1);
+}
+
+void Encode_R(int *zz, int k, int r) {
+  int ssss = csize(zz[k], 1),
+    rs = (16 * r) + ssss;
+
+  /* Append EHUFSI(RS) bits of EHUFCO(RS) */
+
+  if (zz[k] < 0)
+    zz[k] = zz[k] - 1;
+
+  /* Append SSSS low order bits of ZZ(K) */
+
+  /* Done */
+}
+
+
+void Encode_AC_coefficients(int K, int R, int *zz, EHUFSI ehufsi, EHUFCO ehufco, uint8_t *r4s4, int iter) {
+  int k = K + 1,
+    r = R;
+
+  int i = iter;
+
+
+  if (zz[k] == 0) {
+    if (k == 63){
+      r4s4[i] = 0x00;
+
+    } else {
+      r = r + 1;
+      Encode_AC_coefficient(k, r, zz, ehufsi, ehufco, r4s4, i);
+    }
+  } else {
+    while (r > 15) {
+      r4s4[i] = 0xF0;
+
+      r = r - 16;
+    }
+
+    Encode_R(zz[k]);
+    r = 0;
+
+    if (k != 63)
+      Encode_AC_coefficient(k, r, zz, ehufsi, ehufco, r4s4, i);
+  }
 
   return;
 }

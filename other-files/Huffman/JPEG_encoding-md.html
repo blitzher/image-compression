@@ -177,7 +177,7 @@ Sequential is the simple one in which entropy encoding can be applied directly t
 <h3>General sequential and progressive syntax</h3>
 <h4>High-level syntax</h4>
 <p><em>Syntax for sequential DCT-based, progressive DCT-based, and lossless modes:</em></p>
-<p><img src="jpeg_high-level.png" alt="High-level syntax"></p>
+<p><img src="diagrams/jpeg_high-level.png" alt="High-level syntax"></p>
 <table>
 <thead>
 <tr>
@@ -201,7 +201,7 @@ Sequential is the simple one in which entropy encoding can be applied directly t
 </tbody>
 </table>
 <h4>Frame header syntax</h4>
-<p><img src="jpeg_frame-header.png" alt="Frame header syntax"></p>
+<p><img src="diagrams/jpeg_frame-header.png" alt="Frame header syntax"></p>
 <table>
 <thead>
 <tr>
@@ -281,9 +281,9 @@ Sequential is the simple one in which entropy encoding can be applied directly t
 </tbody>
 </table>
 <p><em>Frame header parameter sizes and values:</em></p>
-<p><img src="jpeg_frame-header-param.png" alt="Frame header parameter sizes and values"></p>
+<p><img src="diagrams/jpeg_frame-header-param.png" alt="Frame header parameter sizes and values"></p>
 <h4>Scan header syntax</h4>
-<p><img src="jpeg_scan-header.png" alt="Scan header syntax"></p>
+<p><img src="diagrams/jpeg_scan-header.png" alt="Scan header syntax"></p>
 <table>
 <thead>
 <tr>
@@ -341,7 +341,7 @@ Sequential is the simple one in which entropy encoding can be applied directly t
 <p>where <math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>H</mi><mi>j</mi></msub><annotation encoding="TeX">H_j</annotation></semantics></math> and <math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>V</mi><mi>j</mi></msub><annotation encoding="TeX">V_j</annotation></semantics></math> are the horizontal and vertical sampling factors for scan component j.</p>
 </blockquote>
 <p><em>Scan header parameter size and values:</em></p>
-<p><img src="jpeg_scan-header-param.png" alt="Scan header parameter size and values"></p>
+<p><img src="diagrams/jpeg_scan-header-param.png" alt="Scan header parameter size and values"></p>
 <h4>Table-specification and mescellaneous marker segment syntax.</h4>
 <p>...</p>
 <h4>Quantization table-specification syntax</h4>
@@ -361,7 +361,7 @@ Sequential is the simple one in which entropy encoding can be applied directly t
 <h4>Abbreviated format for table specification data</h4>
 <p>...</p>
 <h4>Flow of compressed data syntax</h4>
-<p><img src="jpeg_flow-of-compressed-data.png" alt="Flow of compressed data syntax"></p>
+<p><img src="diagrams/jpeg_flow-of-compressed-data.png" alt="Flow of compressed data syntax"></p>
 <br/>
 <h3>Structure of DC code table</h3>
 <p>The DC code table is a set of Huffman codes (width a max length of 16 bits) and appended additional bits which encodes any possible value of DIFF.</p>
@@ -433,6 +433,111 @@ Note that the most significant bit of the appended bit sequence is 0 for negativ
 </tr>
 </tbody>
 </table>
+<h4>Huffman encoding of DC coefficients</h4>
+<pre><code>
+</code></pre>
+<h3>Huffman encoding of AC coefficients</h3>
+<h4>Table Structure</h4>
+<blockquote>
+<p>Each non-zero AC coefficient in ZZ is described by a composite 8-bit value, RS, of the form</p>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><mi>S</mi><mo>=</mo><mi>b</mi><mi>i</mi><mi>n</mi><mi>a</mi><mi>r</mi><mi>y</mi><msup><mspace width="1em"/><mo>′</mo></msup><mi>R</mi><mi>R</mi><mi>R</mi><mi>R</mi><mi>S</mi><mi>S</mi><mi>S</mi><msup><mi>S</mi><mo>′</mo></msup></mrow><annotation encoding="TeX">RS = binary \quad 'RRRRSSSS'
+</annotation></semantics></math>
+<br/>
+The 4 least significant bits, ’SSSS’, define a category for the amplitude of the next non-zero coefficient in ZZ, and the 4 most significant bits, ’RRRR’, give the position of the coefficient in ZZ relative to the previous non-zero coefficient (i.e.the run-length of zero coefficients between non-zero coefficients).<br/>
+Since the run length of zero coefficients may exceed 15, the value ’RRRRSSSS’ = X’F0’ is defined to represent a run length of 15 zero coefficients followed by a coefficient of zero amplitude. (This can be interpreted as a run length of 16 zero coefficients.) <br/>
+In addition, a special value ’RRRRSSSS’ = ’00000000’ is used to code the end-of-block (EOB), when all remaining coefficients in the block are zero.
+</blockquote>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">SSSS</th>
+<th style="text-align:center">AC coefficients</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">–1, 1</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">–3, –2, 2, 3</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">–7..–4, 4..7</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">–15..–8, 8..15</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:center">–31..–16, 16..31</td>
+</tr>
+<tr>
+<td style="text-align:center">6</td>
+<td style="text-align:center">–63..–32, 32..63</td>
+</tr>
+<tr>
+<td style="text-align:center">7</td>
+<td style="text-align:center">–127..–64, 64..127</td>
+</tr>
+<tr>
+<td style="text-align:center">8</td>
+<td style="text-align:center">–255..–128, 128..255</td>
+</tr>
+<tr>
+<td style="text-align:center">9</td>
+<td style="text-align:center">–511..–256, 256..511</td>
+</tr>
+<tr>
+<td style="text-align:center">10</td>
+<td style="text-align:center">–1023..–512, 512..1023</td>
+</tr>
+</tbody>
+</table>
+<pre><code>CSIZE(ZZ(K), SSSS := 1):
+    if magnitude(SSSS).high &lt;= abs(ZZ(K)) &gt;= magnitude(SSSS).low:
+        return SSSS
+    else:
+        CSIZE(ZZ(K), SSSS + 1)
+</code></pre>
+<h4>Huffman encoding of AC coefficients</h4>
+<pre><code>Encode_AC_coefficients(K := 0, R := 0):
+    K = K + 1
+    
+    if ZZ(K) = 0:
+        if K = 63:
+            Append EHUFS(X'00') bits of EHUFCO(X'00')
+            // Done
+        else:
+            R := R + 1
+            Encode_AC_coefficients(K, R)
+    else:
+        while R &gt; 15:
+            Append EHUFSI(X'F0') bits of EHUFCO(X'F0')
+            R := R - 16
+            
+        Encode_R,ZZ(K)
+        R := 0
+        
+        if K = 63:
+            // Done
+        else:
+            Encode_AC_coefficients(K, R)
+</code></pre>
+<pre><code>Encode_R,ZZ(K):
+    SSSS := CSIZE(ZZ(K))
+    RS := (16 * R) + SSSS
+    Append EHUFSI(RS) bits of EHUFCO(RS)
+    
+    if ZZ(K) &lt; 0:
+        ZZ(K) := ZZ(K) - 1
+    
+    Append SSSS low order bits of ZZ(K)
+    // Done
+</code></pre>
 <h3>Convert Huffman table specs to tables of codes and lengths</h3>
 <table>
 <thead>

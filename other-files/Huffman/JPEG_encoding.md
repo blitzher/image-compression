@@ -151,6 +151,84 @@ The two's complement difference magnitudes are grouped into 12 categories, SSSS,
 |  10   |  –1023..–512, 512..1023  |
 |  11   | –2047..–1024, 1024..2047 |
 
+#### Huffman encoding of DC coefficients
+
+```
+
+```
+
+### Huffman encoding of AC coefficients
+
+#### Table Structure
+
+> Each non-zero AC coefficient in ZZ is described by a composite 8-bit value, RS, of the form
+> $$RS = binary \quad 'RRRRSSSS'$$ 
+> <br/>
+> The 4 least significant bits, ’SSSS’, define a category for the amplitude of the next non-zero coefficient in ZZ, and the 4 most significant bits, ’RRRR’, give the position of the coefficient in ZZ relative to the previous non-zero coefficient (i.e.the run-length of zero coefficients between non-zero coefficients).<br/>
+> Since the run length of zero coefficients may exceed 15, the value ’RRRRSSSS’ = X’F0’ is defined to represent a run length of 15 zero coefficients followed by a coefficient of zero amplitude. (This can be interpreted as a run length of 16 zero coefficients.) <br/>
+> In addition, a special value ’RRRRSSSS’ = ’00000000’ is used to code the end-of-block (EOB), when all remaining coefficients in the block are zero.
+
+| SSSS  |     AC coefficients      |
+| :---: | :----------------------: |
+|   1   |          –1, 1           |
+|   2   |       –3, –2, 2, 3       |
+|   3   |       –7..–4, 4..7       |
+|   4   |      –15..–8, 8..15      |
+|   5   |     –31..–16, 16..31     |
+|   6   |     –63..–32, 32..63     |
+|   7   |    –127..–64, 64..127    |
+|   8   |   –255..–128, 128..255   |
+|   9   |   –511..–256, 256..511   |
+|  10   |  –1023..–512, 512..1023  |
+
+```
+CSIZE(ZZ(K), SSSS := 1):
+    if magnitude(SSSS).high <= abs(ZZ(K)) >= magnitude(SSSS).low:
+        return SSSS
+    else:
+        CSIZE(ZZ(K), SSSS + 1)
+```
+
+#### Huffman encoding of AC coefficients
+
+```
+Encode_AC_coefficients(K := 0, R := 0):
+    K = K + 1
+    
+    if ZZ(K) = 0:
+        if K = 63:
+            Append EHUFS(X'00') bits of EHUFCO(X'00')
+            // Done
+        else:
+            R := R + 1
+            Encode_AC_coefficients(K, R)
+    else:
+        while R > 15:
+            Append EHUFSI(X'F0') bits of EHUFCO(X'F0')
+            R := R - 16
+            
+        Encode_R,ZZ(K)
+        R := 0
+        
+        if K = 63:
+            // Done
+        else:
+            Encode_AC_coefficients(K, R)
+```
+
+```
+Encode_R,ZZ(K):
+    SSSS := CSIZE(ZZ(K))
+    RS := (16 * R) + SSSS
+    Append EHUFSI(RS) bits of EHUFCO(RS)
+    
+    if ZZ(K) < 0:
+        ZZ(K) := ZZ(K) - 1
+    
+    Append SSSS low order bits of ZZ(K)
+    // Done
+```
+
 ### Convert Huffman table specs to tables of codes and lengths
 
 | Symbol     | Description                                                             |
